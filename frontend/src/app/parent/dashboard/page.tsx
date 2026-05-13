@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import { fetchDashboardData } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
+import { useTranslation } from '@/lib/multilingual';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -154,6 +155,19 @@ export default function ParentDashboard() {
     : null;
   const displayAvg = avgScore ?? computedAvg;
 
+  // Stable source arrays — only rebuild when underlying data changes
+  const alertMsgTexts  = useMemo(() => alerts.map((a: any)   => a.message      ?? ''), [alerts]);
+  const deadTitleTexts = useMemo(() => deadlines.map((d: any) => d.title        ?? ''), [deadlines]);
+  const recMsgTexts    = useMemo(() => recs.map((r: any)      => r.message      ?? ''), [recs]);
+  const recActionTexts = useMemo(() => recs.map((r: any)      => r.action_text  ?? ''), [recs]);
+
+  const { displayed: dispAlertMsgs,    translating: translatingAlerts    } = useTranslation(alertMsgTexts,  language);
+  const { displayed: dispDeadlineTitles, translating: translatingDeadlines } = useTranslation(deadTitleTexts, language);
+  const { displayed: dispRecMsgs,      translating: translatingRecs      } = useTranslation(recMsgTexts,    language);
+  const { displayed: dispRecActions }                                        = useTranslation(recActionTexts, language);
+
+  const translating = translatingAlerts || translatingDeadlines || translatingRecs;
+
   // Learning Progress card (replaces Attendance stat)
   const assignmentCompletion = data?.assignment_completion_pct ?? null;
   const learningValue =
@@ -208,6 +222,14 @@ export default function ParentDashboard() {
                 </div>
               </div>
 
+              {/* Translating indicator */}
+              {translating && (
+                <div className="flex items-center gap-2 text-[11px] text-orange-500 font-semibold px-1">
+                  <span className="w-3 h-3 rounded-full border-2 border-orange-400 border-t-transparent animate-spin inline-block" />
+                  Translating content…
+                </div>
+              )}
+
               {/* ── Row 1: Quick Stats ── */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <StatCard
@@ -254,7 +276,9 @@ export default function ParentDashboard() {
                         >
                           <AlertPill type={a.type} priority={a.priority} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate">{a.message}</p>
+                            <p className="text-sm font-medium text-gray-800 truncate">
+                              {dispAlertMsgs[i] ?? a.message}
+                            </p>
                             {a.subject && (
                               <p className="text-[11px] text-gray-400 truncate">{a.subject}</p>
                             )}
@@ -289,7 +313,9 @@ export default function ParentDashboard() {
                               <span className="text-sm font-black text-orange-600 leading-none">{day}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{d.title}</p>
+                              <p className="text-sm font-semibold text-gray-800 truncate">
+                                {dispDeadlineTitles[i] ?? d.title}
+                              </p>
                               <p className="text-[11px] text-gray-400 truncate">{d.type}</p>
                             </div>
                             <span className={`text-[11px] font-bold shrink-0 ${urgent ? 'text-red-500' : warn ? 'text-orange-500' : 'text-gray-400'}`}>
@@ -366,8 +392,12 @@ export default function ParentDashboard() {
                         <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                           <span className="text-lg shrink-0 mt-0.5">{recIcon(r.type)}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800">{r.message}</p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">{r.action_text}</p>
+                            <p className="text-sm font-semibold text-gray-800">
+                              {dispRecMsgs[i] ?? r.message}
+                            </p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              {dispRecActions[i] ?? r.action_text}
+                            </p>
                           </div>
                         </div>
                       ))}

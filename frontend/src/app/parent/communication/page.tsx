@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import TopBar from '@/components/TopBar';
+import MicBtn from '@/components/MicBtn';
+import SpeakBtn from '@/components/SpeakBtn';
 import { useDashboard } from '@/lib/DashboardContext';
+import { useTranslation, useSpeechInput, useTTS } from '@/lib/multilingual';
 import {
   fetchConversations,
   fetchConversationMessages,
@@ -16,7 +19,6 @@ import {
   MagnifyingGlassIcon,
   PaperAirplaneIcon,
   XMarkIcon,
-  MicrophoneIcon,
 } from '@heroicons/react/24/outline';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -81,72 +83,6 @@ const CATEGORY_COLOR: Record<string, string> = {
 
 const FILTER_TABS = ['All', 'Unread', 'Academic', 'Leave Request', 'General Enquiry'];
 
-// Speech recognition language codes for supported languages
-const SPEECH_LANG_MAP: Record<string, string> = {
-  en: 'en-IN',
-  hi: 'hi-IN',
-  te: 'te-IN',
-  or: 'or-IN',
-};
-
-// ── Speech-to-Text Hook ───────────────────────────────────────────────────
-
-function useSpeechInput(language: string) {
-  const [activeField, setActiveField] = useState<string | null>(null);
-
-  function startFor(fieldKey: string, onResult: (text: string) => void) {
-    const SR =
-      (window as any).webkitSpeechRecognition ||
-      (window as any).SpeechRecognition;
-    if (!SR) {
-      alert('Speech recognition is not supported in this browser. Try Chrome or Edge.');
-      return;
-    }
-    const rec = new SR();
-    rec.lang = SPEECH_LANG_MAP[language] ?? 'en-IN';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e: any) => {
-      onResult(e.results[0][0].transcript);
-      setActiveField(null);
-    };
-    rec.onerror = () => setActiveField(null);
-    rec.onend   = () => setActiveField(null);
-    rec.start();
-    setActiveField(fieldKey);
-  }
-
-  return { activeField, startFor };
-}
-
-// ── Mic Button ────────────────────────────────────────────────────────────
-
-function MicBtn({
-  fieldKey,
-  activeField,
-  onClick,
-}: {
-  fieldKey: string;
-  activeField: string | null;
-  onClick: () => void;
-}) {
-  const active = activeField === fieldKey;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={active ? 'Listening…' : 'Speak to fill'}
-      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 border ${
-        active
-          ? 'bg-red-50 border-red-200 text-red-500'
-          : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
-      }`}
-    >
-      <MicrophoneIcon className={`w-4 h-4 ${active ? 'animate-pulse' : ''}`} />
-    </button>
-  );
-}
-
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function timeAgo(iso: string | null): string {
@@ -206,10 +142,14 @@ function categoryBadge(cat: string) {
 function ConvItem({
   conv,
   selected,
+  displaySubject,
+  displayPreview,
   onClick,
 }: {
   conv: Conversation;
   selected: boolean;
+  displaySubject?: string;
+  displayPreview?: string;
   onClick: () => void;
 }) {
   const isParentLast = conv.latest_sender === 'PARENT';
@@ -236,7 +176,9 @@ function ConvItem({
               {timeAgo(conv.latest_message_time ?? conv.updated_at)}
             </span>
           </div>
-          <p className="text-xs text-gray-500 truncate mt-0.5">{conv.subject}</p>
+          <p className="text-xs text-gray-500 truncate mt-0.5">
+            {displaySubject ?? conv.subject}
+          </p>
           <div className="flex items-center justify-between mt-1 gap-2">
             <p
               className={`text-[11px] truncate flex-1 ${
@@ -244,7 +186,7 @@ function ConvItem({
               }`}
             >
               {isParentLast ? 'You: ' : ''}
-              {conv.latest_message ?? 'No messages yet'}
+              {displayPreview ?? conv.latest_message ?? 'No messages yet'}
             </p>
             {conv.unread_count > 0 && (
               <span className="w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center shrink-0">
@@ -260,8 +202,21 @@ function ConvItem({
 
 // ── Message Bubble ─────────────────────────────────────────────────────────
 
-function MessageBubble({ msg }: { msg: Message }) {
+function MessageBubble({
+  msg,
+  displayText,
+  speaking,
+  fallback = false,
+  onSpeak,
+}: {
+  msg: Message;
+  displayText: string;
+  speaking: string | null;
+  fallback?: boolean;
+  onSpeak: () => void;
+}) {
   const isParent = msg.sender_type === 'PARENT';
+  const ttsKey   = `msg_${msg.message_id}`;
   return (
     <div className={`flex flex-col ${isParent ? 'items-end' : 'items-start'} mb-4`}>
       <div className={`flex items-center gap-1.5 mb-1 ${isParent ? 'flex-row-reverse' : ''}`}>
@@ -275,6 +230,12 @@ function MessageBubble({ msg }: { msg: Message }) {
         <span className="text-[11px] font-semibold text-gray-500">{msg.sender_name}</span>
         <span className="text-[10px] text-gray-300">·</span>
         <span className="text-[10px] text-gray-400">{msgTime(msg.created_at)}</span>
+        <SpeakBtn
+          textKey={ttsKey}
+          speaking={speaking}
+          fallback={fallback}
+          onSpeak={onSpeak}
+        />
       </div>
 
       <div
@@ -284,7 +245,7 @@ function MessageBubble({ msg }: { msg: Message }) {
             : 'bg-orange-50 text-gray-800 border border-orange-100 rounded-tl-sm'
         }`}
       >
-        <p className="whitespace-pre-wrap">{msg.message}</p>
+        <p className="whitespace-pre-wrap">{displayText}</p>
       </div>
     </div>
   );
@@ -564,8 +525,43 @@ export default function CommunicationCenterPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Speech input for the reply area (uses current language)
-  const { activeField, startFor } = useSpeechInput(language);
+  const { activeField, startFor }  = useSpeechInput(language);
+  const { speaking, speak, fallbackLang } = useTTS();
+
+  // Stable source arrays for translation — only change when IDs change
+  const convIdKey = useMemo(() => conversations.map(c => c.conv_id).join(','), [conversations]);
+  const convSubjectTexts = useMemo(
+    () => conversations.map(c => c.subject),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [convIdKey],
+  );
+  const convPreviewTexts = useMemo(
+    () => conversations.map(c => c.latest_message ?? ''),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [convIdKey],
+  );
+  const msgIdKey = useMemo(() => messages.map(m => m.message_id).join(','), [messages]);
+  const msgTexts = useMemo(
+    () => messages.map(m => m.message),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [msgIdKey],
+  );
+
+  const { displayed: dispSubjects, translating: translatingConvs } = useTranslation(convSubjectTexts, language);
+  const { displayed: dispPreviews }                                 = useTranslation(convPreviewTexts, language);
+  const { displayed: msgTranslations, translating: translatingMsgs } = useTranslation(msgTexts, language);
+
+  // Build conv_id → {subject, preview} map from translated parallel arrays
+  const convTranslations = useMemo(() => {
+    const map: Record<number, { subject: string; preview: string }> = {};
+    conversations.forEach((c, i) => {
+      map[c.conv_id] = {
+        subject: dispSubjects[i] ?? c.subject,
+        preview: dispPreviews[i] ?? c.latest_message ?? '',
+      };
+    });
+    return map;
+  }, [conversations, dispSubjects, dispPreviews]);
 
   // Load conversations
   const loadConversations = useCallback(async () => {
@@ -645,17 +641,18 @@ export default function CommunicationCenterPage() {
     setRecipients([]);
   };
 
-  const filtered = conversations.filter(c => {
+  const filtered = useMemo(() => conversations.filter(c => {
     if (filter === 'Unread' && c.unread_count === 0) return false;
     if (filter !== 'All' && filter !== 'Unread' && c.category !== filter) return false;
+    const dispSubj = convTranslations[c.conv_id]?.subject ?? c.subject;
     if (
       search &&
-      !c.subject.toLowerCase().includes(search.toLowerCase()) &&
+      !dispSubj.toLowerCase().includes(search.toLowerCase()) &&
       !c.recipient_name.toLowerCase().includes(search.toLowerCase())
     )
       return false;
     return true;
-  });
+  }), [conversations, filter, search, convTranslations]);
 
   return (
     <div className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-800 font-sans">
@@ -735,6 +732,8 @@ export default function CommunicationCenterPage() {
                   key={c.conv_id}
                   conv={c}
                   selected={selected?.conv_id === c.conv_id}
+                  displaySubject={convTranslations[c.conv_id]?.subject}
+                  displayPreview={convTranslations[c.conv_id]?.preview || undefined}
                   onClick={() => setSelected(c)}
                 />
               ))
@@ -782,8 +781,16 @@ export default function CommunicationCenterPage() {
                       >
                         {selected.status}
                       </span>
+                      {translatingMsgs && (
+                        <span className="text-[10px] text-orange-400 font-semibold flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded-full border border-orange-400 border-t-transparent animate-spin inline-block" />
+                          Translating…
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">{selected.subject}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {convTranslations[selected.conv_id]?.subject ?? selected.subject}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -812,9 +819,21 @@ export default function CommunicationCenterPage() {
                       </span>
                       <div className="flex-1 h-px bg-gray-100" />
                     </div>
-                    {messages.map(m => (
-                      <MessageBubble key={m.message_id} msg={m} />
-                    ))}
+                    {messages.map((m, i) => {
+                      const dispText  = msgTranslations[i] ?? m.message;
+                      const ttsKey    = `msg_${m.message_id}`;
+                      const isFallback = !!fallbackLang && speaking === ttsKey;
+                      return (
+                        <MessageBubble
+                          key={m.message_id}
+                          msg={m}
+                          displayText={dispText}
+                          speaking={speaking}
+                          fallback={isFallback}
+                          onSpeak={() => speak(dispText, language, ttsKey)}
+                        />
+                      );
+                    })}
                     <div ref={messagesEndRef} />
                   </>
                 )}

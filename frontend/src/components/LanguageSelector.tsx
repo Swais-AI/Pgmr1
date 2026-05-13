@@ -9,7 +9,8 @@ interface LanguageSelectorProps {
 const LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'hi', label: 'Hindi' },
-  { code: 'te', label: 'Telugu' }
+  { code: 'te', label: 'Telugu' },
+  { code: 'or', label: 'Odia' },
 ];
 
 export default function LanguageSelector({ currentLang, onSelect, disabled }: LanguageSelectorProps) {
