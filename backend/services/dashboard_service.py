@@ -4,16 +4,17 @@ from fastapi import HTTPException
 from models import (
     StudentMaster, ClassMaster, AssignmentMaster, StudentSubmission,
     QuizMaster, QuizResponse, TeacherParentInteractionV2, NoticeBoard,
-    SubjectMaster, ChapterMaster, TeacherMaster, CallRequest,
-    AttendanceMaster,
-    # SchoolEvent — imported but unused; upcoming_events=[] is hardcoded.
-    # Restore if school events are queried from DB.
+    SubjectMaster, ChapterMaster, TeacherMaster,
+    # AttendanceMaster — DISABLED: attendance module removed from parent portal.
+    # CallRequest     — DISABLED: call-request routes disabled; not queried here.
+    # SchoolEvent     — imported but unused; upcoming_events=[] is hardcoded.
 )
 from schemas import (
-    DashboardResponse, StudentSchema, AssignmentSchema, QuizSchema, 
+    DashboardResponse, StudentSchema, AssignmentSchema, QuizSchema,
     RemarkSchema, NoticeSchema, CallRequestResponse,
-    AttendanceTrendSchema, PerformanceSummarySchema, EventSchema, 
-    DailySummarySchema, AlertSchema, AcademicHealthSchema, 
+    # AttendanceTrendSchema — DISABLED: returned as null; attendance module removed.
+    PerformanceSummarySchema, EventSchema,
+    DailySummarySchema, AlertSchema, AcademicHealthSchema,
     EngagementIndicatorSchema, DeadlineSchema, SmartRecommendationSchema,
     WeeklyProgressSchema, ClassRankSchema, SubjectPerformanceData, NotificationSchema
 )
@@ -27,12 +28,12 @@ def get_dashboard_data(db: Session, student_id: int):
     student_query = db.query(StudentMaster, ClassMaster)\
         .join(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
         .filter(StudentMaster.student_id == student_id).first()
-        
+
     if not student_query:
         raise HTTPException(status_code=404, detail="Student not found")
-        
+
     student, class_info = student_query
-    
+
     student_data = StudentSchema(
         student_id=student.student_id,
         full_name=student.full_name,
@@ -50,7 +51,7 @@ def get_dashboard_data(db: Session, student_id: int):
     .outerjoin(StudentSubmission, (StudentSubmission.assignment_id == AssignmentMaster.assignment_id) & (StudentSubmission.student_id == student_id))\
     .filter(SubjectMaster.class_id == student.class_id)\
     .order_by(AssignmentMaster.due_date.desc()).all()
-        
+
     assignment_list = []
     pending_count = 0
     overdue_assignments = []
@@ -75,7 +76,7 @@ def get_dashboard_data(db: Session, student_id: int):
                 upcoming_deadlines.append(DeadlineSchema(
                     title=assign.title, type=f"Assignment • {subject_name}", due_date=due_date_str, days_left=days_left
                 ))
-            
+
         assignment_list.append(AssignmentSchema(
             title=assign.title, subject=subject_name, due_date=due_date_str,
             status=status, marks_obtained=submission.marks_obtained if submission else None
@@ -91,7 +92,7 @@ def get_dashboard_data(db: Session, student_id: int):
     .join(SubjectMaster, ChapterMaster.subject_id == SubjectMaster.subject_id)\
     .outerjoin(QuizResponse, (QuizResponse.quiz_id == QuizMaster.quiz_id) & (QuizResponse.student_id == student_id))\
     .filter(SubjectMaster.class_id == student.class_id).all()
-        
+
     quiz_list = []
     subject_scores = {}
     total_score = 0
@@ -106,7 +107,7 @@ def get_dashboard_data(db: Session, student_id: int):
             subject_scores[subject_name].append(pct)
             total_score += pct
             total_quizzes += 1
-            
+
             quiz_list.append(QuizSchema(subject=subject_name, score=str(score), total=str(quiz.total_marks)))
         else:
             quiz_list.append(QuizSchema(subject=subject_name, score="--", total=str(quiz.total_marks or "--")))
@@ -114,18 +115,18 @@ def get_dashboard_data(db: Session, student_id: int):
     strongest_subject = "N/A"
     weakest_subject = "N/A"
     avg_score = total_score / total_quizzes if total_quizzes > 0 else 0
-    
+
     subject_performance_list = []
     if subject_scores:
         avg_per_subj = {subj: sum(scores)/len(scores) for subj, scores in subject_scores.items()}
         strongest_subject = max(avg_per_subj, key=avg_per_subj.get)
         weakest_subject = min(avg_per_subj, key=avg_per_subj.get)
-        
+
         for subj, avg in avg_per_subj.items():
             subject_performance_list.append(SubjectPerformanceData(
                 subject=subj, score=round(avg, 1), class_average=round(avg, 1) # simple fallback
             ))
-            
+
     subject_performance_list.sort(key=lambda x: x.score, reverse=True)
 
     performance_summary = PerformanceSummarySchema(
@@ -141,12 +142,12 @@ def get_dashboard_data(db: Session, student_id: int):
         .filter(TeacherParentInteractionV2.student_id == student_id)\
         .filter(TeacherParentInteractionV2.comments.isnot(None))\
         .filter(TeacherParentInteractionV2.comments != '').all()
-        
+
     all_remarks = []
     for inter, teacher_name in interactions:
         remark_date = inter.created_at or now
         all_remarks.append({"teacher_name": teacher_name, "comment": inter.comments.strip(), "date_obj": remark_date, "date": remark_date.strftime("%Y-%m-%d")})
-        
+
     all_remarks.sort(key=lambda x: x["date_obj"], reverse=True)
     remark_list = [RemarkSchema(remark_id=i, teacher_name=r["teacher_name"], comment=r["comment"], date=r["date"]) for i, r in enumerate(all_remarks, start=1)]
 
@@ -156,7 +157,7 @@ def get_dashboard_data(db: Session, student_id: int):
         .filter(NoticeBoard.notice_text.isnot(None))\
         .filter(NoticeBoard.notice_text != '')\
         .order_by(NoticeBoard.created_at.desc()).all()
-        
+
     notice_list = []
     for notice, teacher_name in notices_query:
         notice_date_str = notice.notice_date.strftime("%d %b %Y") if notice.notice_date else (notice.created_at.strftime("%d %b %Y") if notice.created_at else "")
@@ -169,26 +170,21 @@ def get_dashboard_data(db: Session, student_id: int):
             posted_by_name=teacher_name or "Admin"
         ))
 
-    # 6. Attendance
-    attendance_records = db.query(AttendanceMaster).filter(AttendanceMaster.student_id == student_id).all()
-    total_days = len(attendance_records)
-    present_days = sum(1 for a in attendance_records if a.status == "Present")
-    attendance_pct = (present_days / total_days * 100) if total_days > 0 else 100.0
-    
-    attendance_trend = AttendanceTrendSchema(
-        percentage=f"{round(attendance_pct, 1)}%",
-        trend="up" if attendance_pct >= 90 else "down",
-        monthly_data=[{"month": "Current", "present": present_days, "absent": total_days - present_days}]
-    )
+    # 6. Attendance — DISABLED ─────────────────────────────────────────────────
+    # AttendanceMaster DB dependency removed. The attendance module has been
+    # removed from the parent portal. attendance_trend and attendance_heat are
+    # returned as null. Health score and recommendations now derived purely from
+    # assignments and quizzes.
+    # To restore: re-add AttendanceMaster to imports and the query block below.
 
     # 7. Action Required (Alerts Priority logic)
     # Overdue, due in 3 days, low quiz (< 50), unread remarks. Limit 4.
     alerts = []
-    
+
     for ov in overdue_assignments:
         alerts.append(AlertSchema(type="warning", priority="HIGH", message=f"{ov['title']} overdue", subject=ov['subject'], due="Due passed"))
         if len(alerts) == 4: break
-        
+
     if len(alerts) < 4:
         for due in upcoming_deadlines:
             if due.days_left <= 3:
@@ -197,7 +193,7 @@ def get_dashboard_data(db: Session, student_id: int):
             elif due.days_left <= 7:
                 alerts.append(AlertSchema(type="info", priority="MEDIUM", message=due.title, subject=due.type.split("•")[-1].strip(), due=f"Due in {due.days_left} days"))
                 if len(alerts) == 4: break
-                
+
     if len(alerts) < 4:
         for subj, scores in subject_scores.items():
             if any(s < 50 for s in scores):
@@ -205,11 +201,11 @@ def get_dashboard_data(db: Session, student_id: int):
                 if len(alerts) == 4: break
 
     # Fallback missing properties in AlertSchema (we will update schema to include subject and due)
-    
+
     # 8. Smart Recommendations (Rule based)
     smart_recommendations = []
-    if attendance_pct < 90:
-        smart_recommendations.append(SmartRecommendationSchema(type="attendance", message="Improve attendance", action_text="Aim for above 90% consistency."))
+    if avg_score > 0 and avg_score < 50:
+        smart_recommendations.append(SmartRecommendationSchema(type="academic", message="Quiz scores need improvement", action_text="Review recent chapter materials consistently."))
     if overdue_assignments:
         smart_recommendations.append(SmartRecommendationSchema(type="task", message="Complete overdue assignments", action_text="Submit pending work immediately."))
     if weakest_subject != "N/A" and len(smart_recommendations) < 3:
@@ -229,13 +225,14 @@ def get_dashboard_data(db: Session, student_id: int):
     # 10. Academic Streak (Consecutive active weeks logic)
     total_assignments = pending_count + sum(1 for a in assignment_list if a.status == "Completed") + len(overdue_assignments)
     submission_rate = (total_assignments - pending_count - len(overdue_assignments)) / total_assignments if total_assignments > 0 else 1
-    
+
     if submission_rate > 0.8: streak_val = "3 Weeks"
     elif submission_rate > 0.5: streak_val = "1 Week"
     else: streak_val = "0 Weeks"
 
-    # 11. Health Score (40% att, 30% assignment, 30% quiz)
-    health_score_val = int((attendance_pct * 0.4) + (submission_rate * 100 * 0.3) + (avg_score * 0.3))
+    # 11. Health Score (60% assignment completion, 40% quiz avg)
+    # Attendance component removed — module disabled.
+    health_score_val = int((submission_rate * 100 * 0.6) + (avg_score * 0.4))
     if health_score_val >= 80: health_status = "Good"
     elif health_score_val >= 60: health_status = "Average"
     else: health_status = "Needs Attention"
@@ -261,7 +258,7 @@ def get_dashboard_data(db: Session, student_id: int):
     # Remarks
     for r in remark_list[:2]:
         notifications.append(NotificationSchema(id=f"r_{r.remark_id}", type="info", title=f"New Remark from {r.teacher_name}", message=r.comment, date=r.date, is_read=False, link="/parent/remarks"))
-    
+
     # Sort by a date proxy (just return top 5)
     notifications = notifications[:5]
 
@@ -270,9 +267,7 @@ def get_dashboard_data(db: Session, student_id: int):
         description="Stable engagement"
     )
 
-    if attendance_pct >= 90: attendance_heat = "GOOD"
-    elif attendance_pct >= 75: attendance_heat = "AVERAGE"
-    else: attendance_heat = "NEEDS ATTENTION"
+    attendance_heat = None  # Attendance module removed; field intentionally null
 
     return DashboardResponse(
         student=student_data,
@@ -281,7 +276,7 @@ def get_dashboard_data(db: Session, student_id: int):
         remarks=remark_list[:2],
         notices=notice_list[:2],
         call_requests=[],
-        attendance_trend=attendance_trend,
+        attendance_trend=None,  # Attendance module removed
         performance_summary=performance_summary,
         subject_performance=subject_performance_list,
         upcoming_events=[],
@@ -299,4 +294,3 @@ def get_dashboard_data(db: Session, student_id: int):
         class_rank=class_rank,
         notifications=notifications
     )
-

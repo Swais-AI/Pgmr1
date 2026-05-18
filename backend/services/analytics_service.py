@@ -9,9 +9,16 @@
 # subject-performance, monthly-trend, and assignment-completion logic that
 # could be reused if an analytics module is added back.
 #
-# To restore: uncomment the route in dashboard.py and re-add the import:
-#   from services.analytics_service import get_analytics_data
-# Also re-enable AnalyticsResponse in schemas.py.
+# ⚠️  WARNING: This file imports AttendanceMaster and AnalyticsResponse, both
+# of which have since been removed/commented out from models.py and schemas.py.
+# If this file is ever re-imported it will raise ImportError. Update those
+# imports before restoring.
+#
+# To restore:
+#   1. Un-comment AnalyticsResponse in schemas.py.
+#   2. Un-comment AttendanceMaster class in models.py.
+#   3. Uncomment the route in dashboard.py and re-add the import:
+#        from services.analytics_service import get_analytics_data
 # ════════════════════════════════════════════════════════════════════════════
 
 from sqlalchemy.orm import Session

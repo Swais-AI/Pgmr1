@@ -334,46 +334,56 @@ class MappedChildSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# ── Attendance Module ──────────────────────────────────────────────────────
-
-class AttendanceDaySchema(BaseModel):
-    date: str
-    status: str  # Present, Absent, HalfDay, Holiday
-
-class AttendanceOverviewSchema(BaseModel):
-    percentage: float
-    present_days: int
-    absent_days: int
-    half_days: int
-    total_school_days: int
-
-class AttendanceDataResponse(BaseModel):
-    overview: AttendanceOverviewSchema
-    records: List[AttendanceDaySchema]
-
-class LeaveRequestCreate(BaseModel):
-    student_id: int
-    parent_id: int
-    from_date: date
-    to_date: date
-    reason: str
-    parent_note: Optional[str] = None
-
-class LeaveRequestResponse(BaseModel):
-    leave_request_id: int
-    student_id: int
-    from_date: str
-    to_date: str
-    reason: str
-    parent_note: Optional[str] = None
-    status: str
-    created_at: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-class LeaveStatusUpdate(BaseModel):
-    status: str  # Approved or Rejected
-    reviewed_by: int
+# ── DISABLED: Attendance Module Schemas ───────────────────────────────────
+# These schemas served the attendance endpoints in routers/dashboard.py:
+#   GET  /attendance/{student_id}
+#   POST /attendance/leave-request
+#   GET  /attendance/leave-requests/{student_id}
+#   PATCH /attendance/leave-request/{leave_request_id}
+# All four endpoints are now commented out. The attendance module has been
+# fully removed from the parent portal. Leave requests now exist only as a
+# Communication Center category (routers/communication.py).
+# DB tables (attendance_master, leave_requests) are preserved for rollback.
+# Restore this block together with the endpoints in routers/dashboard.py.
+#
+# class AttendanceDaySchema(BaseModel):
+#     date: str
+#     status: str  # Present, Absent, HalfDay, Holiday
+#
+# class AttendanceOverviewSchema(BaseModel):
+#     percentage: float
+#     present_days: int
+#     absent_days: int
+#     half_days: int
+#     total_school_days: int
+#
+# class AttendanceDataResponse(BaseModel):
+#     overview: AttendanceOverviewSchema
+#     records: List[AttendanceDaySchema]
+#
+# class LeaveRequestCreate(BaseModel):
+#     student_id: int
+#     parent_id: int
+#     from_date: date
+#     to_date: date
+#     reason: str
+#     parent_note: Optional[str] = None
+#
+# class LeaveRequestResponse(BaseModel):
+#     leave_request_id: int
+#     student_id: int
+#     from_date: str
+#     to_date: str
+#     reason: str
+#     parent_note: Optional[str] = None
+#     status: str
+#     created_at: str
+#     model_config = ConfigDict(from_attributes=True)
+#
+# class LeaveStatusUpdate(BaseModel):
+#     status: str  # Approved or Rejected
+#     reviewed_by: int
+# ──────────────────────────────────────────────────────────────────────────
 
 # ── Communication Module ───────────────────────────────────────────────────
 
@@ -416,4 +426,3 @@ class SendConversationMessageSchema(BaseModel):
     sender_type: str   # PARENT or TEACHER
     sender_name: str
     message: str
-

@@ -1,9 +1,13 @@
 // ════════════════════════════════════════════════════════════════════════════
-// ORPHANED COMPONENT — AttendanceHeatWidget
-// Was: a compact attendance card on the old dashboard showing GOOD/WARNING/
-// CRITICAL heat-based status with a link to /parent/attendance.
-// Dashboard redesign uses an inline StatCard for attendance instead.
-// Not imported by: any page or component.
+// DISABLED COMPONENT — AttendanceHeatWidget
+//
+// Attendance module has been fully removed from the parent portal.
+// This component is NOT imported by any active page or component.
+// The /parent/attendance route now redirects to /parent/dashboard.
+// Dashboard uses a "Learning Progress" StatCard derived from assignments/quizzes.
+//
+// Do NOT import this component. Kept for reference / rollback only.
+// To restore: re-enable attendance module, re-add to dashboard, update sidebar.
 // ════════════════════════════════════════════════════════════════════════════
 'use client';
 import React from 'react';

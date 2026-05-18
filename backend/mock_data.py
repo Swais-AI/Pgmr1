@@ -7,14 +7,15 @@ from models import (
     ClassMaster, StudentMaster, TeacherMaster, SubjectMaster,
     ChapterMaster, AssignmentMaster, StudentSubmission, QuizMaster,
     QuizResponse, NoticeBoard, TeacherParentInteractionV2,
-    ParentMaster, ParentStudentMap, CallRequest,
-    AttendanceMaster, SchoolEvent, ChatThread, ChatMessage
+    ParentMaster, ParentStudentMap,
+    # Legacy models below are commented out in models.py (excluded from DB creation):
+    # CallRequest, AttendanceMaster, SchoolEvent, ChatThread, ChatMessage, LeaveRequest
 )
 
 def seed_data():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    
+
     db = SessionLocal()
     try:
         # 1. Classes & Sections
@@ -40,10 +41,10 @@ def seed_data():
         s_rohit = StudentMaster(full_name="Rohit Sharma", class_id=classes[0].class_id, section="A", roll_no="12")
         s_riya = StudentMaster(full_name="Riya Sharma", class_id=classes[2].class_id, section="A", roll_no="25")
         s_aryan = StudentMaster(full_name="Aryan Sharma", class_id=classes[3].class_id, section="A", roll_no="5")
-        
+
         s_jane = StudentMaster(full_name="Jane Singh", class_id=classes[0].class_id, section="A", roll_no="14")
         s_bob = StudentMaster(full_name="Bob Singh", class_id=classes[1].class_id, section="B", roll_no="2")
-        
+
         db.add_all([s_rohit, s_riya, s_aryan, s_jane, s_bob])
         db.commit()
 
@@ -79,7 +80,7 @@ def seed_data():
             db.add_all([sub1, sub2, sub3])
             db.commit()
             subjects.extend([sub1, sub2, sub3])
-            
+
             for sub in [sub1, sub2, sub3]:
                 for i in range(1, 4):
                     ch = ChapterMaster(subject_id=sub.subject_id, chapter_name=f"{sub.subject_name} Chapter {i}", chapter_order=i)
@@ -90,7 +91,7 @@ def seed_data():
         # 6. Generate Massive Data
         today = datetime.now().date()
         all_students = [s_rohit, s_riya, s_aryan, s_jane, s_bob]
-        
+
         # Notices (per class)
         notice_templates = [
             ("PTM Scheduled", "Parent-Teacher Meeting is scheduled for next week."),
@@ -101,12 +102,12 @@ def seed_data():
             ("Sports Day", "Annual Sports Meet is scheduled. Don't forget your sports uniform."),
             ("Achievement", "Our school won the inter-school science fair!")
         ]
-        
+
         for c in classes:
             for _ in range(15):
                 ntitle, ncontent = random.choice(notice_templates)
                 days_ago = random.randint(1, 150)
-                n = NoticeBoard(title=f"{ntitle} ({c.class_name})", content=ncontent, class_id=c.class_id, posted_by=random.choice(teachers).teacher_id)
+                n = NoticeBoard(notice_title=f"{ntitle} ({c.class_name})", notice_text=ncontent, applicable_class=c.class_name, notice_date=(datetime.now() - timedelta(days=days_ago)).date(), posted_by=random.choice(teachers).teacher_id)
                 n.created_at = datetime.now() - timedelta(days=days_ago)
                 db.add(n)
         db.commit()
@@ -116,39 +117,39 @@ def seed_data():
             student_subjects = [sub for sub in subjects if sub.class_id == s.class_id]
             student_chapters = [ch for ch in chapters if ch.subject_id in [sub.subject_id for sub in student_subjects]]
             student_parents = db.query(ParentStudentMap).filter_by(student_id=s.student_id).all()
-            
+
             # Assignments (20-30 per student)
             for _ in range(random.randint(20, 30)):
                 ch = random.choice(student_chapters)
                 sub = next(su for su in student_subjects if su.subject_id == ch.subject_id)
                 t = next(te for te in teachers if te.teacher_id == sub.teacher_id)
-                
+
                 days_offset = random.randint(-120, 15) # Due dates from 4 months ago to 15 days in future
                 due_date = today + timedelta(days=days_offset)
-                
+
                 a = AssignmentMaster(
-                    chapter_id=ch.chapter_id, 
-                    title=f"{sub.subject_name} Assignment: {ch.chapter_name} Practice", 
-                    description="Complete all exercises at the end of the chapter.", 
-                    due_date=due_date, 
+                    chapter_id=ch.chapter_id,
+                    title=f"{sub.subject_name} Assignment: {ch.chapter_name} Practice",
+                    description="Complete all exercises at the end of the chapter.",
+                    due_date=due_date,
                     assigned_by=t.teacher_id
                 )
                 db.add(a)
                 db.commit()
-                
+
                 # Determine status
                 if due_date > today:
                     status = random.choices(["pending", "completed"], weights=[0.7, 0.3])[0]
                 else:
                     status = random.choices(["completed", "overdue"], weights=[0.85, 0.15])[0]
-                    
+
                 if status == "completed":
                     subm_date = due_date - timedelta(days=random.randint(0, 3))
                     subm = StudentSubmission(
-                        assignment_id=a.assignment_id, 
-                        student_id=s.student_id, 
-                        submission_text="Attached homework PDF.", 
-                        marks_obtained=round(random.uniform(5.0, 10.0), 1), 
+                        assignment_id=a.assignment_id,
+                        student_id=s.student_id,
+                        submission_text="Attached homework PDF.",
+                        marks_obtained=round(random.uniform(5.0, 10.0), 1),
                         teacher_remarks=random.choice(["Excellent work!", "Good effort, but review Q3.", "Perfect submission.", ""])
                     )
                     subm.submitted_at = datetime.combine(subm_date, datetime.min.time())
@@ -161,7 +162,7 @@ def seed_data():
                 q = QuizMaster(chapter_id=ch.chapter_id, title=f"Pop Quiz on {ch.chapter_name}", total_marks=20.0, duration_minutes=30)
                 db.add(q)
                 db.commit()
-                
+
                 is_completed = random.choices([True, False], weights=[0.9, 0.1])[0]
                 if is_completed:
                     score = round(random.uniform(5.0, 20.0), 1)
@@ -180,96 +181,55 @@ def seed_data():
                 ("is displaying exceptional leadership skills.", "positive"),
                 ("was involved in a minor disruption during class. Needs attention.", "warning")
             ]
-            
+
             for _ in range(15):
                 r_text, r_type = random.choice(remark_templates)
                 t = random.choice(teachers)
                 days_ago = random.randint(1, 150)
-                
+
                 tp = TeacherParentInteractionV2(
-                    teacher_id=t.teacher_id, 
-                    student_id=s.student_id, 
-                    class_id=s.class_id, 
-                    section=s.section, 
+                    teacher_id=t.teacher_id,
+                    student_id=s.student_id,
+                    class_id=s.class_id,
+                    section=s.section,
                     comments=f"{s.full_name.split()[0]} {r_text}"
                 )
                 tp.created_at = datetime.now() - timedelta(days=days_ago)
                 db.add(tp)
             db.commit()
 
-            # Call Requests (15 per student across mapped parents)
-            for _ in range(15):
-                if not student_parents: continue
-                parent = random.choice(student_parents)
-                t = random.choice(teachers)
-                msg = random.choice([
-                    "I want to discuss my child's academic progress.",
-                    "Can we talk about the recent dip in quiz scores?",
-                    "Need guidance on how to help with Science homework.",
-                    "Discussion regarding upcoming school trip.",
-                    "Inquiry about the warning remark given yesterday."
-                ])
-                status = random.choice(["pending", "approved", "rejected", "completed"])
-                days_ago = random.randint(1, 150)
-                
-                cr = CallRequest(
-                    parent_id=parent.parent_id,
-                    student_id=s.student_id,
-                    teacher_id=t.teacher_id,
-                    message=msg,
-                    status=status
-                )
-                cr.created_at = datetime.now() - timedelta(days=days_ago)
-                db.add(cr)
-            db.commit()
+            # ── DISABLED: Call Requests seeding ──────────────────────────────────
+            # CallRequest model commented out in models.py; table excluded from DB.
+            # Restore by un-commenting models.py CallRequest class.
+            # ──────────────────────────────────────────────────────────────────────
 
-            # Attendance (Past 30 days)
-            for i in range(30):
-                att_date = today - timedelta(days=i)
-                if att_date.weekday() >= 5: continue
-                status = random.choices(["Present", "Absent", "Late"], weights=[0.85, 0.1, 0.05])[0]
-                db.add(AttendanceMaster(
-                    student_id=s.student_id, class_id=s.class_id,
-                    attendance_date=att_date, status=status, academic_year="2025-26"
-                ))
-            db.commit()
+            # ── DISABLED: Attendance seeding ──────────────────────────────
+            # Attendance module removed from parent portal. The attendance_master
+            # table still exists but is no longer populated by the active app.
+            # Uncomment to restore attendance seed data if the module is reinstated.
+            #
+            # for i in range(30):
+            #     att_date = today - timedelta(days=i)
+            #     if att_date.weekday() >= 5: continue
+            #     status = random.choices(["Present", "Absent", "Late"], weights=[0.85, 0.1, 0.05])[0]
+            #     db.add(AttendanceMaster(
+            #         student_id=s.student_id, class_id=s.class_id,
+            #         attendance_date=att_date, status=status, academic_year="2025-26"
+            #     ))
+            # db.commit()
+            # ──────────────────────────────────────────────────────────────
 
-            # Chat Threads & Messages
-            if student_parents:
-                for parent in student_parents:
-                    for t in random.sample(teachers, 2):
-                        thread = ChatThread(parent_id=parent.parent_id, teacher_id=t.teacher_id, student_id=s.student_id)
-                        thread.created_at = datetime.now() - timedelta(days=random.randint(10, 30))
-                        db.add(thread)
-                        db.commit()
-                        
-                        msg_time = thread.created_at
-                        for _ in range(random.randint(3, 5)):
-                            msg_time += timedelta(hours=random.randint(1, 12))
-                            sender_type = random.choice(["parent", "teacher"])
-                            sender_id = parent.parent_id if sender_type == "parent" else t.teacher_id
-                            is_read = random.choice([True, False]) if sender_type == "teacher" else True
-                            
-                            msg = ChatMessage(
-                                thread_id=thread.id, sender_type=sender_type, sender_id=sender_id,
-                                message=f"This is a {sender_type} message about progress.",
-                                created_at=msg_time, is_read=is_read
-                            )
-                            db.add(msg)
-                        db.commit()
+            # ── DISABLED: Chat Threads & Messages seeding ─────────────────────────
+            # ChatThread + ChatMessage models commented out in models.py.
+            # Replaced by Communication Center (SupportTicket + TicketMessage).
+            # Restore by un-commenting models.py ChatThread and ChatMessage classes.
+            # ──────────────────────────────────────────────────────────────────────
 
-        # Events
-        event_templates = [
-            ("Science Fair", "Annual science exhibition.", "Activity"),
-            ("Mid-Term Exams", "Half-yearly examinations.", "Exam"),
-            ("Winter Break", "School closed for winter.", "Holiday"),
-            ("Parent Teacher Meeting", "Mandatory PTM for all.", "PTM"),
-            ("Sports Day", "Annual sports competition.", "Activity")
-        ]
-        for title, desc, etype in event_templates:
-            ev_date = today + timedelta(days=random.randint(5, 60))
-            db.add(SchoolEvent(title=title, description=desc, event_date=ev_date, academic_year="2025-26", event_type=etype))
-        db.commit()
+        # ── DISABLED: Events seeding ──────────────────────────────────────────────
+        # SchoolEvent model commented out in models.py; table excluded from DB.
+        # Dashboard returns upcoming_events=[] (hardcoded empty list).
+        # Restore by un-commenting models.py SchoolEvent class.
+        # ──────────────────────────────────────────────────────────────────────────
 
         print("Large Database seeded successfully.")
     except Exception as e:

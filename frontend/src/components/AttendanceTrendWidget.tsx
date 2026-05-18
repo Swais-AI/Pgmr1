@@ -1,9 +1,12 @@
 // ════════════════════════════════════════════════════════════════════════════
-// ORPHANED COMPONENT — AttendanceTrendWidget
-// Was: showed attendance trend data on the old dashboard. Replaced by
-// AttendanceHeatWidget (which links to /parent/attendance) and the full
-// Attendance module (/parent/attendance/page.tsx).
-// Not imported by: any page or component.
+// DISABLED COMPONENT — AttendanceTrendWidget
+//
+// Attendance module has been fully removed from the parent portal.
+// This component is NOT imported by any active page or component.
+// The backend no longer returns populated attendance_trend data.
+//
+// Do NOT import this component. Kept for reference / rollback only.
+// To restore: re-enable attendance module and re-wire backend attendance_trend.
 // ════════════════════════════════════════════════════════════════════════════
 'use client';
 

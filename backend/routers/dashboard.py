@@ -6,10 +6,23 @@ from datetime import datetime, date, timedelta
 from services.dashboard_service import get_dashboard_data
 # DISABLED: analytics_service only served GET /analytics/ which has no frontend caller
 # from services.analytics_service import get_analytics_data
-from schemas import DashboardResponse, MappedChildSchema, AssignmentSchema, QuizSchema, QuizDetailResponse, RemarkSchema, NoticeSchema, CallRequestCreate, CallRequestResponse, AssignmentSubmitRequest, AssignmentAnalyticsResponse, AttendanceDataResponse, AttendanceOverviewSchema, AttendanceDaySchema, LeaveRequestCreate, LeaveRequestResponse, LeaveStatusUpdate, NotificationSchema
-# Removed from import: AnalyticsResponse (analytics module removed from frontend)
+from schemas import (
+    DashboardResponse, MappedChildSchema, AssignmentSchema, QuizSchema, QuizDetailResponse,
+    RemarkSchema, NoticeSchema, CallRequestCreate, CallRequestResponse,
+    AssignmentSubmitRequest, AssignmentAnalyticsResponse, NotificationSchema,
+    # DISABLED: AttendanceDataResponse, AttendanceOverviewSchema, AttendanceDaySchema
+    #           — attendance module removed from parent portal.
+    # DISABLED: LeaveRequestCreate, LeaveRequestResponse, LeaveStatusUpdate
+    #           — standalone leave-request endpoints disabled; flow moved to Communication Center.
+    # DISABLED: AnalyticsResponse — analytics module removed from frontend.
+)
 from models import (
-    ParentStudentMap, StudentMaster, ClassMaster, AssignmentMaster, SubjectMaster, ChapterMaster, StudentSubmission, QuizMaster, QuizResponse, TeacherParentInteractionV2, TeacherMaster, NoticeBoard, CallRequest, AttendanceMaster, LeaveRequest
+    ParentStudentMap, StudentMaster, ClassMaster, AssignmentMaster, SubjectMaster,
+    ChapterMaster, StudentSubmission, QuizMaster, QuizResponse,
+    TeacherParentInteractionV2, TeacherMaster, NoticeBoard,
+    # DISABLED: CallRequest   — call-request routes commented out below.
+    # DISABLED: AttendanceMaster — attendance endpoints commented out below.
+    # DISABLED: LeaveRequest     — leave-request endpoints commented out below.
 )
 
 router = APIRouter()
@@ -63,7 +76,7 @@ def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
         .join(ParentStudentMap, ParentStudentMap.student_id == StudentMaster.student_id)\
         .join(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
         .filter(ParentStudentMap.parent_id == parent_id).all()
-        
+
     result = []
     for student, class_info in children_query:
         result.append(MappedChildSchema(
@@ -195,16 +208,16 @@ def get_quiz_history(student_id: int, db: Session = Depends(get_db)):
     .join(SubjectMaster, ChapterMaster.subject_id == SubjectMaster.subject_id)\
     .join(QuizResponse, (QuizResponse.quiz_id == QuizMaster.quiz_id) & (QuizResponse.student_id == student_id))\
     .filter(SubjectMaster.class_id == student.class_id).all()
-        
+
     quiz_list = []
     for quiz, subject_name, response in quizzes_query:
         if not response or response.score is None:
             continue
-            
+
         score = float(response.score)
         total = float(quiz.total_marks or 100)
         percentage = round((score / total) * 100, 1) if total > 0 else 0
-        
+
         if percentage >= 85:
             status = "Excellent"
             suggestion = "Excellent consistency."
@@ -217,7 +230,7 @@ def get_quiz_history(student_id: int, db: Session = Depends(get_db)):
         else:
             status = "Needs Improvement"
             suggestion = "Immediate academic attention recommended."
-            
+
         quiz_list.append(QuizDetailResponse(
             subject=subject_name,
             score=str(score),
@@ -243,13 +256,13 @@ def get_remarks_history(student_id: int, db: Session = Depends(get_db)):
         .filter(StudentSubmission.student_id == student_id)\
         .filter(StudentSubmission.teacher_remarks.isnot(None))\
         .filter(StudentSubmission.teacher_remarks != '').all()
-        
+
     interactions = db.query(TeacherParentInteractionV2, TeacherMaster.full_name)\
         .join(TeacherMaster, TeacherParentInteractionV2.teacher_id == TeacherMaster.teacher_id)\
         .filter(TeacherParentInteractionV2.student_id == student_id)\
         .filter(TeacherParentInteractionV2.comments.isnot(None))\
         .filter(TeacherParentInteractionV2.comments != '').all()
-        
+
     all_remarks = []
     idx = 1
     for sub, teacher_name, subject_name in submissions_remarks:
@@ -263,7 +276,7 @@ def get_remarks_history(student_id: int, db: Session = Depends(get_db)):
             "date": remark_date.strftime("%d %b %Y")
         })
         idx += 1
-        
+
     for inter, teacher_name in interactions:
         remark_date = inter.created_at or datetime.utcnow()
         all_remarks.append({
@@ -275,7 +288,7 @@ def get_remarks_history(student_id: int, db: Session = Depends(get_db)):
             "date": remark_date.strftime("%d %b %Y")
         })
         idx += 1
-        
+
     all_remarks.sort(key=lambda x: x["date_obj"], reverse=True)
     return [RemarkSchema(**r) for r in all_remarks]
 
@@ -283,22 +296,22 @@ def get_remarks_history(student_id: int, db: Session = Depends(get_db)):
 def get_notices_history(student_id: int, db: Session = Depends(get_db)):
     student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
     if not student: raise HTTPException(status_code=404, detail="Student not found")
-    
-    # We optionally could match student's class name with applicable_class, but since we 
-    # changed the DB, let's just pull all notices and filter by something reasonable or just return all for now 
+
+    # We optionally could match student's class name with applicable_class, but since we
+    # changed the DB, let's just pull all notices and filter by something reasonable or just return all for now
     # (assuming all notices are relevant to the parent in this view).
     notices_query = db.query(NoticeBoard, TeacherMaster.full_name)\
         .outerjoin(TeacherMaster, NoticeBoard.posted_by == TeacherMaster.teacher_id)\
         .filter(NoticeBoard.notice_text.isnot(None))\
         .filter(NoticeBoard.notice_text != '')\
         .order_by(NoticeBoard.created_at.desc()).all()
-        
+
     return [
         NoticeSchema(
             notice_id=n.notice_id,
-            notice_title=n.notice_title or "Notice", 
-            notice_text=n.notice_text.strip(), 
-            notice_date=n.notice_date.strftime("%d %b %Y") if n.notice_date else (n.created_at.strftime("%d %b %Y") if n.created_at else ""), 
+            notice_title=n.notice_title or "Notice",
+            notice_text=n.notice_text.strip(),
+            notice_date=n.notice_date.strftime("%d %b %Y") if n.notice_date else (n.created_at.strftime("%d %b %Y") if n.created_at else ""),
             applicable_class=n.applicable_class or "All",
             posted_by_name=t or "Admin"
         ) for n, t in notices_query
@@ -362,19 +375,19 @@ from models import SupportTicket, TicketMessage
 @router.get("/notifications/{student_id}", response_model=List[NotificationSchema])
 def get_notifications(student_id: int, db: Session = Depends(get_db)):
     notifications = []
-    
+
     # 1. Unread Ticket Replies
     unread_msgs = db.query(TicketMessage, SupportTicket)\
         .join(SupportTicket, TicketMessage.ticket_id == SupportTicket.ticket_id)\
         .filter(SupportTicket.student_id == student_id, TicketMessage.sender_type != "PARENT", TicketMessage.is_read == False).all()
-        
+
     for msg, ticket in unread_msgs:
         notifications.append(NotificationSchema(
             id=f"msg_{msg.message_id}", type="ticket_reply", title=f"Reply on {ticket.ticket_number}",
             message=msg.message[:50] + "...", date=msg.created_at.isoformat() if msg.created_at else "",
             is_read=False, link="/parent/communication"
         ))
-        
+
     # 2. Recent Announcements (mocked unread for today)
     from datetime import date, timedelta
     today = date.today()
@@ -389,140 +402,47 @@ def get_notifications(student_id: int, db: Session = Depends(get_db)):
                     message=n.notice_title or "Notice", date=n.created_at.isoformat(),
                     is_read=False, link="/parent/notices"
                 ))
-                
+
     notifications.sort(key=lambda x: x.date, reverse=True)
     return notifications
 
 
-# ── Attendance Endpoints ───────────────────────────────────────────────────
-
-@router.get("/attendance/{student_id}", response_model=AttendanceDataResponse)
-def get_attendance(student_id: int, db: Session = Depends(get_db)):
-    student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-
-    records_query = db.query(AttendanceMaster)\
-        .filter(AttendanceMaster.student_id == student_id)\
-        .order_by(AttendanceMaster.attendance_date.asc()).all()
-
-    records = []
-    present = 0
-    absent = 0
-    half_days = 0
-
-    for r in records_query:
-        status = r.status or "Present"
-        # Normalise "Late" → "HalfDay" for display purposes
-        if status == "Late":
-            status = "HalfDay"
-        records.append(AttendanceDaySchema(
-            date=r.attendance_date.isoformat(),
-            status=status
-        ))
-        if status == "Present":
-            present += 1
-        elif status == "Absent":
-            absent += 1
-        elif status == "HalfDay":
-            half_days += 1
-
-    total = present + absent + half_days
-    pct = round((present + half_days * 0.5) / total * 100, 1) if total > 0 else 0.0
-
-    # If no real records exist yet, return lightweight mock so UI renders sensibly
-    if not records:
-        from datetime import timedelta
-        import random as _rnd
-        today = date.today()
-        statuses = ["Present", "Present", "Present", "Present", "Absent", "HalfDay"]
-        start = today.replace(day=1) - timedelta(days=60)
-        mock = []
-        p = ab = hd = 0
-        d = start
-        while d <= today:
-            if d.weekday() < 5:  # Mon–Fri
-                s = _rnd.choice(statuses)
-                mock.append(AttendanceDaySchema(date=d.isoformat(), status=s))
-                if s == "Present": p += 1
-                elif s == "Absent": ab += 1
-                else: hd += 1
-            d += timedelta(days=1)
-        tot = p + ab + hd
-        pct = round((p + hd * 0.5) / tot * 100, 1) if tot > 0 else 0.0
-        return AttendanceDataResponse(
-            overview=AttendanceOverviewSchema(percentage=pct, present_days=p, absent_days=ab, half_days=hd, total_school_days=tot),
-            records=mock
-        )
-
-    return AttendanceDataResponse(
-        overview=AttendanceOverviewSchema(percentage=pct, present_days=present, absent_days=absent, half_days=half_days, total_school_days=total),
-        records=records
-    )
-
-
-@router.post("/attendance/leave-request", response_model=LeaveRequestResponse)
-def create_leave_request(request: LeaveRequestCreate, db: Session = Depends(get_db)):
-    leave = LeaveRequest(
-        student_id=request.student_id,
-        parent_id=request.parent_id,
-        from_date=request.from_date,
-        to_date=request.to_date,
-        reason=request.reason,
-        parent_note=request.parent_note,
-        status="Pending"
-    )
-    db.add(leave)
-    db.commit()
-    db.refresh(leave)
-    return LeaveRequestResponse(
-        leave_request_id=leave.leave_request_id,
-        student_id=leave.student_id,
-        from_date=leave.from_date.isoformat(),
-        to_date=leave.to_date.isoformat(),
-        reason=leave.reason,
-        parent_note=leave.parent_note,
-        status=leave.status,
-        created_at=leave.created_at.isoformat() if leave.created_at else ""
-    )
-
-
-@router.get("/attendance/leave-requests/{student_id}", response_model=List[LeaveRequestResponse])
-def get_leave_requests(student_id: int, db: Session = Depends(get_db)):
-    leaves = db.query(LeaveRequest)\
-        .filter(LeaveRequest.student_id == student_id)\
-        .order_by(LeaveRequest.created_at.desc()).all()
-    return [
-        LeaveRequestResponse(
-            leave_request_id=l.leave_request_id,
-            student_id=l.student_id,
-            from_date=l.from_date.isoformat(),
-            to_date=l.to_date.isoformat(),
-            reason=l.reason,
-            parent_note=l.parent_note,
-            status=l.status,
-            created_at=l.created_at.isoformat() if l.created_at else ""
-        ) for l in leaves
-    ]
-
-
-@router.patch("/attendance/leave-request/{leave_request_id}", response_model=LeaveRequestResponse)
-def update_leave_status(leave_request_id: int, update: LeaveStatusUpdate, db: Session = Depends(get_db)):
-    leave = db.query(LeaveRequest).filter(LeaveRequest.leave_request_id == leave_request_id).first()
-    if not leave:
-        raise HTTPException(status_code=404, detail="Leave request not found")
-    leave.status = update.status
-    leave.reviewed_by = update.reviewed_by
-    db.commit()
-    db.refresh(leave)
-    return LeaveRequestResponse(
-        leave_request_id=leave.leave_request_id,
-        student_id=leave.student_id,
-        from_date=leave.from_date.isoformat(),
-        to_date=leave.to_date.isoformat(),
-        reason=leave.reason,
-        parent_note=leave.parent_note,
-        status=leave.status,
-        created_at=leave.created_at.isoformat() if leave.created_at else ""
-    )
-
+# ── DISABLED: Attendance Endpoints ────────────────────────────────────────
+# The Attendance module has been fully removed from the parent portal.
+# These four routes (GET /attendance/{student_id},
+# POST /attendance/leave-request, GET /attendance/leave-requests/{student_id},
+# PATCH /attendance/leave-request/{leave_request_id}) have no frontend callers.
+#
+# The underlying DB tables (attendance_master, leave_requests) remain intact.
+# The AttendanceMaster and LeaveRequest models in models.py are preserved.
+# The schemas (AttendanceDaySchema, AttendanceOverviewSchema, AttendanceDataResponse,
+# LeaveRequestCreate, LeaveRequestResponse, LeaveStatusUpdate) are disabled in
+# schemas.py. The API helpers are disabled in frontend/src/lib/api.ts.
+#
+# Leave requests now exist ONLY as a Communication Center category/workflow
+# routed through /comm/ (routers/communication.py).
+#
+# To restore the standalone attendance module, uncomment:
+#   - These endpoints
+#   - AttendanceMaster, LeaveRequest imports at the top of this file
+#   - The corresponding schemas in schemas.py
+#   - The API helpers in frontend/src/lib/api.ts
+#   - The attendance page: frontend/src/app/parent/attendance/page.tsx
+# ──────────────────────────────────────────────────────────────────────────
+#
+# @router.get("/attendance/{student_id}", response_model=AttendanceDataResponse)
+# def get_attendance(student_id: int, db: Session = Depends(get_db)):
+#     ... (full implementation preserved in git history)
+#
+# @router.post("/attendance/leave-request", response_model=LeaveRequestResponse)
+# def create_leave_request(request: LeaveRequestCreate, db: Session = Depends(get_db)):
+#     ... (full implementation preserved in git history)
+#
+# @router.get("/attendance/leave-requests/{student_id}", response_model=List[LeaveRequestResponse])
+# def get_leave_requests(student_id: int, db: Session = Depends(get_db)):
+#     ... (full implementation preserved in git history)
+#
+# @router.patch("/attendance/leave-request/{leave_request_id}", response_model=LeaveRequestResponse)
+# def update_leave_status(leave_request_id: int, update: LeaveStatusUpdate, db: Session = Depends(get_db)):
+#     ... (full implementation preserved in git history)
+# ──────────────────────────────────────────────────────────────────────────
