@@ -100,8 +100,8 @@ def get_dashboard_data(db: Session, student_id: int):
 
     for quiz, subject_name, response in quizzes_query:
         if response and response.score is not None:
-            score = response.score
-            total = quiz.total_marks or 1
+            score = float(response.score)
+            total = float(quiz.total_marks or 1)
             pct = (score / total) * 100
             if subject_name not in subject_scores: subject_scores[subject_name] = []
             subject_scores[subject_name].append(pct)

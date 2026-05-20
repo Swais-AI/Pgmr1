@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, TIMESTAMP, Date, Text, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Float, Numeric, ForeignKey, TIMESTAMP, Date, Text, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -91,7 +91,7 @@ class StudentSubmission(Base):
     student_id = Column(Integer, ForeignKey("student_master.student_id"), index=True)
     submission_text = Column(Text)
     file_path = Column(Text)
-    marks_obtained = Column(Float)
+    marks_obtained = Column(Numeric(5, 2))
     teacher_remarks = Column(Text)
     submitted_at = Column(TIMESTAMP, default=datetime.utcnow)
     
@@ -103,7 +103,7 @@ class QuizMaster(Base):
     quiz_id = Column(Integer, primary_key=True, index=True)
     chapter_id = Column(Integer, ForeignKey("chapter_master.chapter_id"), index=True)
     quiz_title = Column(String)
-    total_marks = Column(Float)
+    total_marks = Column(Integer)
     duration_minutes = Column(Integer)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
     
@@ -115,7 +115,7 @@ class QuizResponse(Base):
     response_id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer, ForeignKey("quiz_master.quiz_id"))
     student_id = Column(Integer, ForeignKey("student_master.student_id"), index=True)
-    score = Column(Float)
+    score = Column(Numeric(5, 2))
     completed_flag = Column(Boolean, default=False)
     
     quiz_info = relationship("QuizMaster")
@@ -134,7 +134,7 @@ class NoticeBoard(Base):
     teacher_info = relationship("TeacherMaster")
 
 class TeacherParentInteractionV2(Base):
-    __tablename__ = "teacher_parent_interaction_v2"
+    __tablename__ = "teacher_parent_interaction"
     
     id = Column(Integer, primary_key=True, index=True)
     teacher_id = Column(Integer, ForeignKey("teacher_master.teacher_id"))
