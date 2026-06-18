@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
-import { fetchQuizHistory } from '@/lib/api';
+import { fetchQuizHistory, fetchConversations } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
 
 type QuizDetail = {
@@ -50,13 +51,15 @@ const CircularProgress = ({ pct, colorHex }: { pct: number; colorHex: string }) 
 
 export default function QuizPerformancePage() {
   const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
+  const router = useRouter();
   const [quizzes, setQuizzes] = useState<QuizDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [tab, setTab] = useState<string>('All');
   const [search, setSearch] = useState('');
   const [subj, setSubj] = useState('All');
   const [modalData, setModalData] = useState<QuizDetail | null>(null);
+  const [talkLoading, setTalkLoading] = useState(false);
 
   useEffect(() => {
     if (!studentId) return; // wait for real studentId
@@ -94,6 +97,37 @@ export default function QuizPerformancePage() {
   const avgScore = quizzes.length ? quizzes.reduce((a, b) => a + b.percentage, 0) / quizzes.length : 0;
   const highest = quizzes.length ? Math.max(...quizzes.map(q => q.percentage)) : 0;
   const lowest = quizzes.length ? Math.min(...quizzes.map(q => q.percentage)) : 0;
+
+  // Talk to Teacher — reuses Communication Center exactly like Assignment → Ask Teacher.
+  // Checks for an existing thread first; opens it if found, creates a new one otherwise.
+  const handleTalkToTeacher = async (quiz: QuizDetail) => {
+    const threadSubject = `Re: Quiz Discussion - ${quiz.quiz_title}`;
+    setTalkLoading(true);
+    try {
+      const convs = await fetchConversations(studentId, parentId);
+      const existing = convs.find(
+        (c: { subject: string }) => c.subject.trim() === threadSubject.trim()
+      );
+      if (existing) {
+        // Open the existing thread directly
+        router.push(`/parent/communication?conv=${existing.conv_id}`);
+      } else {
+        // Open the New Conversation modal pre-filled with quiz subject
+        router.push(
+          `/parent/communication?new=1&subject=${encodeURIComponent(threadSubject)}&category=Academic`
+        );
+      }
+      setModalData(null);
+    } catch {
+      // Fallback: just open communication with new modal
+      router.push(
+        `/parent/communication?new=1&subject=${encodeURIComponent(threadSubject)}&category=Academic`
+      );
+      setModalData(null);
+    } finally {
+      setTalkLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-full flex flex-col font-sans bg-[#F9FAFB]">
@@ -272,6 +306,32 @@ export default function QuizPerformancePage() {
                   </div>
                 </div>
 
+              </div>
+
+              {/* ── MODAL FOOTER ── */}
+              <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex gap-3" style={{ background: '#FAFAFA' }}>
+                <button
+                  onClick={() => setModalData(null)}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:bg-gray-50"
+                  style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => handleTalkToTeacher(modalData!)}
+                  disabled={talkLoading}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-sm border transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                  style={{ color: '#1D4ED8', borderColor: '#BFDBFE', background: '#EFF6FF' }}
+                >
+                  {talkLoading ? (
+                    <>
+                      <span className="w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin inline-block" />
+                      Opening…
+                    </>
+                  ) : (
+                    <>💬 Talk to Teacher</>
+                  )}
+                </button>
               </div>
 
             </div>

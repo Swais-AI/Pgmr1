@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import MicBtn from '@/components/MicBtn';
 import SpeakBtn from '@/components/SpeakBtn';
@@ -255,6 +256,8 @@ function NewConversationModal({
   parentId,
   language,
   recipients,
+  prefilledSubject = '',
+  prefilledCategory = 'Academic',
   onClose,
   onCreate,
 }: {
@@ -262,12 +265,14 @@ function NewConversationModal({
   parentId: number;
   language: string;
   recipients: Recipient[];
+  prefilledSubject?: string;
+  prefilledCategory?: string;
   onClose: () => void;
   onCreate: (conv: Conversation) => void;
 }) {
   const [recipient,   setRecipient]   = useState<Recipient | null>(null);
-  const [category,    setCategory]    = useState('Academic');
-  const [subject,     setSubject]     = useState('');
+  const [category,    setCategory]    = useState(prefilledCategory || 'Academic');
+  const [subject,     setSubject]     = useState(prefilledSubject || '');
   const [firstMsg,    setFirstMsg]    = useState('');
   const [leaveFrom,   setLeaveFrom]   = useState('');
   const [leaveTo,     setLeaveTo]     = useState('');
@@ -506,8 +511,9 @@ function NewConversationModal({
 
 // ── Main Page ─────────────────────────────────────────────────────────────
 
-export default function CommunicationCenterPage() {
+function CommunicationCenterInner() {
   const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
+  const searchParams = useSearchParams();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
@@ -521,6 +527,10 @@ export default function CommunicationCenterPage() {
   const [search,     setSearch]     = useState('');
   const [showModal,  setShowModal]  = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
+
+  // Pre-fill values when navigating from assignments or quizzes
+  const [prefilledSubject,  setPrefilledSubject]  = useState('');
+  const [prefilledCategory, setPrefilledCategory] = useState('Academic');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -582,6 +592,34 @@ export default function CommunicationCenterPage() {
       loadConversations();
     }
   }, [loadConversations, studentId, parentId]);
+
+  // Auto-open a specific conversation from ?conv= URL param (e.g. from remarks page)
+  useEffect(() => {
+    const convParam = searchParams.get('conv');
+    if (!convParam || conversations.length === 0) return;
+    const targetId = Number(convParam);
+    const target = conversations.find(c => c.conv_id === targetId);
+    if (target) setSelected(target);
+  }, [conversations, searchParams]);
+
+  // Auto-open new conversation modal from ?new=1&subject=...&category=... (from assignments/quiz)
+  useEffect(() => {
+    const isNew  = searchParams.get('new') === '1';
+    const subj   = searchParams.get('subject') ?? '';
+    const cat    = searchParams.get('category') ?? 'Academic';
+    if (!isNew) return;
+    setPrefilledSubject(subj);
+    setPrefilledCategory(cat);
+    if (recipients.length === 0) {
+      fetchConversationRecipients(studentId).then(data => {
+        setRecipients(data);
+        setShowModal(true);
+      });
+    } else {
+      setShowModal(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, studentId]);
 
   useEffect(() => {
     if (showModal && recipients.length === 0) {
@@ -892,13 +930,29 @@ export default function CommunicationCenterPage() {
           parentId={parentId}
           language={language}
           recipients={recipients}
+          prefilledSubject={prefilledSubject}
+          prefilledCategory={prefilledCategory}
           onClose={() => {
             setShowModal(false);
             setRecipients([]);
+            setPrefilledSubject('');
+            setPrefilledCategory('Academic');
           }}
           onCreate={handleConversationCreated}
         />
       )}
     </div>
+  );
+}
+
+export default function CommunicationCenterPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
+      </div>
+    }>
+      <CommunicationCenterInner />
+    </Suspense>
   );
 }

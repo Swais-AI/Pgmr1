@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+﻿from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
 from fastapi import HTTPException
 from models import (
     StudentMaster, ClassMaster, AssignmentMaster, StudentSubmission,
@@ -59,6 +59,7 @@ def get_dashboard_data(db: Session, student_id: int):
         
     assignment_list = []
     pending_count = 0
+    submitted_count = 0
     overdue_assignments = []
     upcoming_deadlines = []
     graded_assignments = []
@@ -69,6 +70,7 @@ def get_dashboard_data(db: Session, student_id: int):
 
         if submission:
             status = "Completed"
+            submitted_count += 1
             if submission.marks_obtained is not None:
                 graded_assignments.append((assign.assignment_title, submission.submitted_at))
         elif assign.due_date and assign.due_date < today:
@@ -88,6 +90,11 @@ def get_dashboard_data(db: Session, student_id: int):
         ))
 
     upcoming_deadlines.sort(key=lambda x: x.days_left)
+    # Only show deadlines due within next 7 days
+    upcoming_deadlines = [d for d in upcoming_deadlines if d.days_left <= 7]
+    total_assignments = len(assignment_list)
+    assignment_completion_pct = round(submitted_count / total_assignments * 100, 1) if total_assignments > 0 else 0.0
+    action_required_count = len(overdue_assignments)
 
     # 3. Quizzes & Subject Performance
     quizzes_query = db.query(
@@ -160,16 +167,25 @@ def get_dashboard_data(db: Session, student_id: int):
             "comment": msg.message.strip(),
             "date_obj": remark_date,
             "date": remark_date.strftime("%Y-%m-%d"),
+            "ticket_id": ticket.ticket_id,
+            "is_read": bool(msg.is_read),
         })
 
     all_remarks.sort(key=lambda x: x["date_obj"], reverse=True)
-    remark_list = [RemarkSchema(remark_id=i, teacher_name=r["teacher_name"], comment=r["comment"], date=r["date"]) for i, r in enumerate(all_remarks, start=1)]
+    remark_list = [RemarkSchema(remark_id=i, teacher_name=r["teacher_name"], comment=r["comment"], date=r["date"], ticket_id=r.get("ticket_id"), is_read=r.get("is_read", True)) for i, r in enumerate(all_remarks, start=1)]
 
     # 5. Notices — posted_by FKs to users_masters.user_id on production.
     notices_query = db.query(NoticeBoard, UsersMaster.full_name)\
         .outerjoin(UsersMaster, NoticeBoard.posted_by == UsersMaster.user_id)\
         .filter(NoticeBoard.notice_text.isnot(None))\
         .filter(NoticeBoard.notice_text != '')\
+        .filter(
+            or_(
+                NoticeBoard.applicable_class == class_info.class_name,
+                NoticeBoard.applicable_class == 'All',
+                NoticeBoard.applicable_class.is_(None),
+            )
+        )\
         .order_by(NoticeBoard.created_at.desc()).all()
         
     notice_list = []
@@ -216,18 +232,86 @@ def get_dashboard_data(db: Session, student_id: int):
 
     # Fallback missing properties in AlertSchema (we will update schema to include subject and due)
     
-    # 8. Smart Recommendations (Rule based)
+    # 8. Smart Recommendations (Rule based, priority-ordered)
     smart_recommendations = []
-    if avg_score > 0 and avg_score < 50:
-        smart_recommendations.append(SmartRecommendationSchema(type="academic", message="Quiz scores need improvement", action_text="Review recent chapter materials consistently."))
-    if overdue_assignments:
-        smart_recommendations.append(SmartRecommendationSchema(type="task", message="Complete overdue assignments", action_text="Submit pending work immediately."))
-    if weakest_subject != "N/A" and len(smart_recommendations) < 3:
-        smart_recommendations.append(SmartRecommendationSchema(type="academic", message=f"Focus on {weakest_subject} quizzes", action_text="Review recent chapters."))
 
+    # Rule 1: Overdue assignments
+    if len(overdue_assignments) >= 2:
+        titles = ", ".join(a["assignment_title"] for a in overdue_assignments[:2])
+        smart_recommendations.append(SmartRecommendationSchema(
+            type="task",
+            message=f"{len(overdue_assignments)} assignments are overdue",
+            action_text=f"Submit '{titles}' immediately to avoid further penalties.",
+        ))
+    elif len(overdue_assignments) == 1:
+        smart_recommendations.append(SmartRecommendationSchema(
+            type="task",
+            message=f"Assignment overdue: {overdue_assignments[0]['assignment_title']}",
+            action_text="Submit this assignment now - late submissions may affect your grade.",
+        ))
+
+    # Rule 2: Low overall quiz average (< 50%)
+    if avg_score > 0 and avg_score < 50 and len(smart_recommendations) < 3:
+        smart_recommendations.append(SmartRecommendationSchema(
+            type="academic",
+            message="Overall quiz performance needs attention",
+            action_text=f"Current average is {round(avg_score, 1)}%. Revise chapter notes and attempt practice quizzes daily.",
+        ))
+
+    # Rule 3: Weak subject average < 50%
+    if subject_scores and weakest_subject != "N/A" and len(smart_recommendations) < 3:
+        weak_avg = sum(subject_scores[weakest_subject]) / len(subject_scores[weakest_subject])
+        if weak_avg < 50:
+            smart_recommendations.append(SmartRecommendationSchema(
+                type="academic",
+                message=f"Struggling in {weakest_subject} ({round(weak_avg, 1)}% avg)",
+                action_text=f"Spend extra time on {weakest_subject} chapters and ask your teacher for help.",
+            ))
+
+    # Rule 4: Recent teacher remarks received
+    if len(all_remarks) >= 1 and len(smart_recommendations) < 3:
+        latest_remark = all_remarks[0]
+        smart_recommendations.append(SmartRecommendationSchema(
+            type="info",
+            message=f"New feedback from {latest_remark['teacher_name']}",
+            action_text="Check your Teacher Remarks and respond via Communication Center if needed.",
+        ))
+
+    # Rule 5: Borderline subject score (50-65%)
+    if subject_scores and len(smart_recommendations) < 3:
+        for subj, scores in subject_scores.items():
+            subj_avg = sum(scores) / len(scores)
+            if 50 <= subj_avg < 65 and subj != weakest_subject:
+                smart_recommendations.append(SmartRecommendationSchema(
+                    type="academic",
+                    message=f"{subj} scores are borderline ({round(subj_avg, 1)}%)",
+                    action_text=f"Consistent revision in {subj} can push the score above 70%. Review recent topics.",
+                ))
+                break
+
+    # Rule 6: High completion + good quiz avg - praise
+    if assignment_completion_pct >= 80 and avg_score >= 75 and len(smart_recommendations) < 3:
+        smart_recommendations.append(SmartRecommendationSchema(
+            type="praise",
+            message="Excellent academic performance!",
+            action_text=f"{round(assignment_completion_pct)}% assignments submitted and {round(avg_score, 1)}% quiz average. Keep it up!",
+        ))
+
+    # Rule 7: No overdue, no pending work - praise
+    if total_assignments > 0 and len(overdue_assignments) == 0 and pending_count == 0 and len(smart_recommendations) < 3:
+        smart_recommendations.append(SmartRecommendationSchema(
+            type="praise",
+            message="All assignments up to date!",
+            action_text="Great discipline - no overdue or pending work. Stay consistent.",
+        ))
+
+    # Fallback
     if not smart_recommendations:
-        smart_recommendations.append(SmartRecommendationSchema(type="praise", message="Maintain current performance", action_text="Great job so far!"))
-
+        smart_recommendations.append(SmartRecommendationSchema(
+            type="praise",
+            message="Keep up the good work!",
+            action_text="Performance is on track. Continue attending classes and submitting assignments on time.",
+        ))
     # 9. Class Rank (Percentile Estimation)
     if avg_score >= 90: percentile = "Top 10%"
     elif avg_score >= 80: percentile = "Top 20%"
@@ -237,8 +321,7 @@ def get_dashboard_data(db: Session, student_id: int):
     class_rank = ClassRankSchema(percentile=percentile, description="Based on average score")
 
     # 10. Academic Streak (Consecutive active weeks logic)
-    total_assignments = pending_count + sum(1 for a in assignment_list if a.status == "Completed") + len(overdue_assignments)
-    submission_rate = (total_assignments - pending_count - len(overdue_assignments)) / total_assignments if total_assignments > 0 else 1
+    submission_rate = (submitted_count / total_assignments) if total_assignments > 0 else 1
     
     if submission_rate > 0.8: streak_val = "3 Weeks"
     elif submission_rate > 0.5: streak_val = "1 Week"
@@ -306,6 +389,8 @@ def get_dashboard_data(db: Session, student_id: int):
         attendance_heat=attendance_heat,
         weekly_progress=weekly_progress,
         class_rank=class_rank,
-        notifications=notifications
+        notifications=notifications,
+        assignment_completion_pct=assignment_completion_pct,
+        action_required_count=action_required_count,
     )
 
