@@ -142,6 +142,19 @@ export const fetchNotifications = async (studentId: number) => {
   } catch { return []; }
 };
 
+export const fetchUnreadCommCount = async (studentId: number): Promise<number> => {
+  try {
+    const response = await api.get(`/notifications/unread-count/${studentId}`);
+    return response.data?.unread_comm_count ?? 0;
+  } catch { return 0; }
+};
+
+export const closeConversation = async (convId: number) => {
+  try {
+    await api.patch(`/comm/conversations/${convId}/status`, null, { params: { status: 'CLOSED' } });
+  } catch { /* ignore */ }
+};
+
 // DISABLED: Old support-ticket API helpers ─────────────────────────────────
 // fetchTickets, createTicket, fetchTicketMessages, createTicketMessage called
 // the /tickets/ CRUD routes which had a FastAPI 422 route-ordering bug and

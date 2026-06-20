@@ -62,6 +62,8 @@ class RemarkSchema(BaseModel):
     subject: Optional[str] = "General"
     comment: str
     date: str
+    ticket_id: Optional[int] = None
+    is_read: bool = False
 
 class NoticeSchema(BaseModel):
     notice_id: int
@@ -70,6 +72,7 @@ class NoticeSchema(BaseModel):
     notice_date: str
     applicable_class: str
     posted_by_name: str
+    is_read: bool = False
 
 # ── DISABLED: Old chat system schemas ─────────────────────────────────────
 # These belonged to the /chat/ thread-based messaging system (ChatThread +
@@ -287,6 +290,8 @@ class DashboardResponse(BaseModel):
     weekly_progress: Optional[WeeklyProgressSchema] = None
     class_rank: Optional[ClassRankSchema] = None
     notifications: List['NotificationSchema'] = []
+    assignment_completion_pct: Optional[float] = None
+    action_required_count: Optional[int] = None
 
 # ── DISABLED: Analytics module response schema ─────────────────────────────
 # Used by GET /analytics/{student_id} and analytics_service.py. The entire

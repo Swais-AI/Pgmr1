@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import SpeakBtn from '@/components/SpeakBtn';
 import { fetchRemarksHistory } from '@/lib/api';
@@ -13,14 +14,16 @@ type RemarkData = {
   subject: string;
   comment: string;
   date: string;
+  ticket_id?: number | null;
+  is_read?: boolean;
 };
 
 const COLORS = [
-  { dot: '#22C55E', bg: '#DCFCE7', text: '#166534' }, // Green
-  { dot: '#3B82F6', bg: '#DBEAFE', text: '#1E3A8A' }, // Blue
-  { dot: '#F97316', bg: '#FFEDD5', text: '#9A3412' }, // Orange
-  { dot: '#A855F7', bg: '#F3E8FF', text: '#6B21A8' }, // Purple
-  { dot: '#EC4899', bg: '#FCE7F3', text: '#9D174D' }, // Pink
+  { dot: '#22C55E', bg: '#DCFCE7', text: '#166534' },
+  { dot: '#3B82F6', bg: '#DBEAFE', text: '#1E3A8A' },
+  { dot: '#F97316', bg: '#FFEDD5', text: '#9A3412' },
+  { dot: '#A855F7', bg: '#F3E8FF', text: '#6B21A8' },
+  { dot: '#EC4899', bg: '#FCE7F3', text: '#9D174D' },
 ];
 
 const getInitials = (name: string) => {
@@ -30,23 +33,103 @@ const getInitials = (name: string) => {
   return 'TR';
 };
 
+// ── localStorage helpers ──────────────────────────────────────────────────────
+
+function getReadRemarkIds(studentId: number): Set<number> {
+  try {
+    const raw = localStorage.getItem(`sgs_read_remarks_${studentId}`);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+function saveReadRemarkIds(studentId: number, ids: Set<number>) {
+  try {
+    localStorage.setItem(`sgs_read_remarks_${studentId}`, JSON.stringify([...ids]));
+  } catch { /* ignore */ }
+}
+
+// ── Remark Detail Modal ───────────────────────────────────────────────────────
+
+function RemarkModal({
+  remark,
+  displayText,
+  onClose,
+  onTalkToTeacher,
+}: {
+  remark: RemarkData;
+  displayText: string;
+  onClose: () => void;
+  onTalkToTeacher: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">💬</span>
+            <div>
+              <h3 className="font-bold text-gray-900">{remark.teacher_name}</h3>
+              <p className="text-xs text-gray-400 mt-0.5">{remark.subject} · {remark.date}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">×</button>
+        </div>
+        <div className="p-6 overflow-y-auto flex-1">
+          <p className="text-sm font-medium text-gray-700 leading-relaxed whitespace-pre-line">{displayText}</p>
+        </div>
+        <div className="px-6 pb-6 pt-2 shrink-0 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            style={{ borderColor: '#E5E7EB' }}
+          >
+            Close
+          </button>
+          <button
+            onClick={onTalkToTeacher}
+            className="flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            style={{ color: '#7E22CE', background: '#F3E8FF', border: '1px solid #E9D5FF' }}
+          >
+            💬 Talk to Teacher
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function RemarksHistory() {
+  const router = useRouter();
   const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
-  const [remarks,   setRemarks]   = useState<RemarkData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [subj,      setSubj]      = useState('All Subjects');
+  const [remarks,     setRemarks]     = useState<RemarkData[]>([]);
+  const [isLoading,   setIsLoading]   = useState(true);
+  const [subj,        setSubj]        = useState('All Subjects');
+  const [readIds,     setReadIds]     = useState<Set<number>>(new Set());
+  const [modalRemark, setModalRemark] = useState<{ remark: RemarkData; displayText: string } | null>(null);
 
   const { speaking, speak, fallbackLang } = useTTS();
 
   useEffect(() => {
-    if (!studentId) return; // wait for real studentId
+    if (!studentId) return;
+    setReadIds(getReadRemarkIds(studentId));
+  }, [studentId]);
+
+  useEffect(() => {
+    if (!studentId) return;
     const loadHistory = async () => {
       setIsLoading(true);
       setSubj('All Subjects');
       try {
-        console.log('[SGS] Remarks: fetching for student_id', studentId);
         const result = await fetchRemarksHistory(studentId);
         setRemarks(result || []);
+        const ids = new Set<number>((result || []).map((r: RemarkData) => r.remark_id));
+        saveReadRemarkIds(studentId, ids);
+        setReadIds(ids);
       } catch (err) {
         console.error('[SGS] Remarks: failed to load', err);
       } finally {
@@ -66,8 +149,6 @@ export default function RemarksHistory() {
     return remarks.filter(r => r.subject === subj);
   }, [remarks, subj]);
 
-  // Stable texts array — memoized so useTranslation sees a new ref only when
-  // content actually changes, not on every re-render.
   const commentTexts = useMemo(
     () => filtered.map(r => r.comment),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,6 +156,16 @@ export default function RemarksHistory() {
   );
 
   const { displayed: translatedComments, translating } = useTranslation(commentTexts, language);
+
+  const handleTalkToTeacher = (remark: RemarkData) => {
+    setModalRemark(null);
+    if (remark.ticket_id) {
+      router.push(`/parent/communication?conv=${remark.ticket_id}`);
+    } else {
+      const s = encodeURIComponent(`Re: Teacher Remark - ${remark.subject}`);
+      router.push(`/parent/communication?new=1&subject=${s}&category=Academic`);
+    }
+  };
 
   return (
     <div className="min-h-full flex flex-col bg-[#F8FAFC] text-gray-800 font-sans">
@@ -134,39 +225,33 @@ export default function RemarksHistory() {
             </div>
           ) : (
             <div className="relative pb-10">
-              {/* Vertical timeline line — aligned to centre of the w-7 dot column */}
               <div className="absolute left-[13px] top-5 bottom-0 w-0.5 bg-gray-200 z-0 hidden sm:block" />
 
               <div className={`space-y-6 relative z-10 transition-opacity duration-200 ${translating ? 'opacity-60' : 'opacity-100'}`}>
                 {filtered.map((remark, index) => {
-                  const colorConfig  = COLORS[index % COLORS.length];
-                  const initials     = getInitials(remark.teacher_name);
-                  const isNew        = index === 0;
-                  const displayText  = translatedComments[index] ?? remark.comment;
-                  const ttsKey       = `remark_${remark.remark_id ?? index}`;
-                  const isFallback   = !!fallbackLang && speaking === ttsKey;
+                  const colorConfig = COLORS[index % COLORS.length];
+                  const initials    = getInitials(remark.teacher_name || 'TR');
+                  const isUnread    = !readIds.has(remark.remark_id);
+                  const displayText = translatedComments[index] ?? remark.comment;
+                  const ttsKey      = `remark_${remark.remark_id ?? index}`;
+                  const isFallback  = !!fallbackLang && speaking === ttsKey;
 
                   return (
-                    <div
-                      key={remark.remark_id || index}
-                      className="flex gap-4 sm:gap-5 items-start relative"
-                    >
-                      {/* Timeline dot — fixed w-7 column so the line aligns */}
+                    <div key={remark.remark_id || index} className="flex gap-4 sm:gap-5 items-start relative">
+                      {/* Timeline dot */}
                       <div className="hidden sm:flex shrink-0 w-7 flex-col items-center pt-5">
                         <div
                           className="w-3 h-3 rounded-full relative z-10"
-                          style={{
-                            backgroundColor: colorConfig.dot,
-                            boxShadow: `0 0 0 4px #F8FAFC`,
-                          }}
+                          style={{ backgroundColor: colorConfig.dot, boxShadow: '0 0 0 4px #F8FAFC' }}
                         />
                       </div>
 
-                      {/* Content card */}
-                      <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 sm:p-5">
-
+                      {/* Content card — click to open modal */}
+                      <div
+                        onClick={() => setModalRemark({ remark, displayText })}
+                        className={`flex-1 bg-white rounded-2xl border shadow-sm hover:shadow-md transition-shadow p-4 sm:p-5 cursor-pointer ${isUnread ? 'border-purple-200' : 'border-gray-100'}`}
+                      >
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          {/* Left: avatar + teacher info */}
                           <div className="flex items-center gap-3">
                             <div
                               className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-black text-sm tracking-wider shrink-0"
@@ -189,10 +274,9 @@ export default function RemarksHistory() {
                             </div>
                           </div>
 
-                          {/* Right: New badge + TTS button */}
                           <div className="flex items-center gap-2 shrink-0">
-                            {isNew && (
-                              <div className="bg-[#DCFCE7] text-[#166534] text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md">
+                            {isUnread && (
+                              <div className="bg-[#F3E8FF] text-[#7E22CE] text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md">
                                 New
                               </div>
                             )}
@@ -205,10 +289,29 @@ export default function RemarksHistory() {
                           </div>
                         </div>
 
-                        {/* Remark text (translated) */}
-                        <p className="text-sm font-medium text-gray-700 leading-relaxed sm:ml-14">
+                        {/* Remark preview text */}
+                        <p className="text-sm font-medium text-gray-700 leading-relaxed sm:ml-14 line-clamp-3">
                           {displayText}
                         </p>
+
+                        {/* Communication links */}
+                        <div className="sm:ml-14 mt-3 flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                          {remark.ticket_id ? (
+                            <a
+                              href={`/parent/communication?conv=${remark.ticket_id}`}
+                              className="text-[11px] font-bold text-purple-600 hover:underline"
+                            >
+                              View full conversation →
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => handleTalkToTeacher(remark)}
+                              className="text-[11px] font-bold text-purple-600 hover:underline"
+                            >
+                              💬 Talk to Teacher
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -222,6 +325,16 @@ export default function RemarksHistory() {
           )}
         </div>
       </div>
+
+      {/* Remark detail modal */}
+      {modalRemark && (
+        <RemarkModal
+          remark={modalRemark.remark}
+          displayText={modalRemark.displayText}
+          onClose={() => setModalRemark(null)}
+          onTalkToTeacher={() => handleTalkToTeacher(modalRemark.remark)}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { fetchAssignmentsHistory, fetchAssignmentAnalytics, submitAssignment } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
@@ -43,6 +44,7 @@ const Badge = ({status}:{status:string}) => {
 
 export default function AssignmentsPage() {
   const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
+  const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [analytics, setAnalytics] = useState<Analytics>({total:0,submitted:0,pending:0,overdue:0,graded:0,completion_pct:0});
   const [isLoading, setIsLoading] = useState(true);
@@ -198,11 +200,12 @@ export default function AssignmentsPage() {
                       ):rows.map((a,i)=>{
                         const dt=daysTag(a.due_date,a.status);
                         return(
-                          <tr key={i} className="transition-colors border-b cursor-default" style={{borderColor:'#F3F4F6'}}
+                          <tr key={i} onClick={()=>setDrawer(a)}
+                            className="transition-colors border-b cursor-pointer" style={{borderColor:'#F3F4F6'}}
                             onMouseEnter={e=>(e.currentTarget.style.background='#FFF7ED')}
                             onMouseLeave={e=>(e.currentTarget.style.background='')}>
                             <td className="px-4 py-3">
-                              <p className="font-bold" style={{color:'#111827'}}>{a.assignment_title}</p>
+                              <p className="font-bold hover:text-orange-600 transition-colors" style={{color:'#111827'}}>{a.assignment_title}</p>
                               <p className="text-xs mt-0.5" style={{color:'#9CA3AF'}}>{a.chapter_name}</p>
                             </td>
                             <td className="px-4 py-3 font-medium whitespace-nowrap" style={{color:'#4B5563'}}>{a.subject}</td>
@@ -215,7 +218,7 @@ export default function AssignmentsPage() {
                               {a.marks_obtained!=null?<>{a.marks_obtained}<span style={{color:'#9CA3AF',fontWeight:400}}> /{a.total_marks||'–'}</span></>:'–'}
                             </td>
                             <td className="px-4 py-3"><Badge status={a.status}/></td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3" onClick={e=>e.stopPropagation()}>
                               <button onClick={()=>setDrawer(a)} className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors hover:border-orange-400 hover:text-orange-600" style={{color:'#374151',borderColor:'#D1D5DB'}}>View</button>
                             </td>
                           </tr>
@@ -366,7 +369,7 @@ export default function AssignmentsPage() {
             </div>
 
             {/* ── STICKY FOOTER ── */}
-            <div className="shrink-0 px-6 py-4 border-t flex gap-3" style={{borderColor:'#E5E7EB',background:'#FAFAFA'}}>
+            <div className="shrink-0 px-6 py-4 border-t flex flex-wrap gap-3" style={{borderColor:'#E5E7EB',background:'#FAFAFA'}}>
               {['Upcoming','Ongoing','Overdue'].includes(drawer.status)?(
                 <button onClick={()=>{setTarget(drawer);openModal(drawer);setDrawer(null);}}
                   className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity"
@@ -380,6 +383,16 @@ export default function AssignmentsPage() {
                   <p className="text-sm font-bold" style={{color:'#15803D'}}>✅ Graded — {drawer.marks_obtained} marks received</p>
                 </div>
               ):null}
+              <button
+                onClick={()=>{
+                  const subject = encodeURIComponent(`Re: ${drawer.assignment_title} (${drawer.subject})`);
+                  router.push(`/parent/communication?new=1&subject=${subject}&category=Academic`);
+                  setDrawer(null);
+                }}
+                className="px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:border-blue-400 hover:text-blue-600 flex items-center gap-1.5"
+                style={{color:'#1D4ED8',borderColor:'#BFDBFE',background:'#EFF6FF'}}>
+                💬 Ask Teacher
+              </button>
               <button onClick={()=>setDrawer(null)}
                 className="px-5 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:bg-gray-50"
                 style={{color:'#6B7280',borderColor:'#E5E7EB'}}>Close</button>
