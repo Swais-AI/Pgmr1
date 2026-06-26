@@ -70,6 +70,8 @@ REQUIRED_TABLES = [
     "notice_board",
     "support_tickets",
     "ticket_messages",
+    "assessments",           # Assessments module — must exist before serving /assessments/
+    "assessment_results",    # Assessments module — stores per-student results
 ]
 
 # Missing legacy tables generate a WARNING but do NOT block startup.

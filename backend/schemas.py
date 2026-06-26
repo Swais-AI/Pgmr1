@@ -433,3 +433,42 @@ class SendConversationMessageSchema(BaseModel):
     sender_name: str
     message: str
 
+
+# ── Assessment Module ──────────────────────────────────────────────────────────
+
+class AssessmentResultSchema(BaseModel):
+    result_id:         int
+    assessment_id:     int
+    title:             str
+    assessment_type:   str
+    subject:           str
+    chapter_name:      str
+    teacher_name:      str
+    assessment_date:   str   # "15 Jan 2025" — display
+    date_iso:          str   # "2025-01-15"   — used by frontend for filter math
+    marks_obtained:    float
+    max_marks:         float
+    percentage:        float
+    performance_badge: str   # Excellent | Good | Average | Needs Improvement
+
+
+class AssessmentTrendPoint(BaseModel):
+    date:       str
+    percentage: float
+    label:      str   # short x-axis label: "15 Jan"
+
+
+class AssessmentSubjectSlice(BaseModel):
+    subject:        str
+    avg_percentage: float
+
+
+class AssessmentAnalyticsResponse(BaseModel):
+    total_assessments:  int
+    average_percentage: float
+    highest_score:      float
+    lowest_score:       float
+    trend_data:         List[AssessmentTrendPoint]
+    subject_data:       List[AssessmentSubjectSlice]
+    subjects:           List[str]
+

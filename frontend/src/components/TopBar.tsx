@@ -200,15 +200,12 @@ export default function TopBar({
   };
 
   const handleLogoutConfirm = () => {
-    // UI-only logout: do NOT clear sgs_parent_id or sgs_student_id
-    // Clear only transient UI state
     setShowLogoutDlg(false);
     setShowProfile(false);
     setShowToast(true);
     setTimeout(() => {
-      setShowToast(false);
-      router.push('/parent/dashboard');
-    }, 1800);
+      window.location.replace('https://staging.sgs.swais.in');
+    }, 1000);
   };
 
   return (
@@ -272,7 +269,7 @@ export default function TopBar({
                   {unreadNotifications.length === 0 ? (
                     <div className="p-6 text-center">
                       <p className="text-2xl mb-2">✅</p>
-                      <p className="text-sm text-gray-500 font-medium">You're all caught up!</p>
+                      <p className="text-sm text-gray-500 font-medium">You&apos;re all caught up!</p>
                       <p className="text-xs text-gray-400 mt-1">No new notifications.</p>
                     </div>
                   ) : (

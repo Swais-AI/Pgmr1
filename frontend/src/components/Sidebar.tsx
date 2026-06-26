@@ -22,6 +22,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { name: 'Dashboard',            icon: '🏠', path: '/parent/dashboard' },
+    { name: 'Assessments',          icon: '📝', path: '/parent/assessments' },
     { name: 'Assignments',          icon: '📄', path: '/parent/assignments' },
     { name: 'Quiz Performance',     icon: '📊', path: '/parent/quiz' },
     { name: 'Teacher Remarks',      icon: '💬', path: '/parent/remarks' },
@@ -48,11 +49,8 @@ export default function Sidebar() {
         `}
       >
         <div className="p-6 flex items-center gap-3 border-b border-gray-700">
-          <div className="bg-orange-600 p-2 rounded-lg">
-            <span className="text-xl">📖</span>
-          </div>
+          <img src="/logo.jpeg" alt="SGS-SWAIS" className="h-10 w-auto" />
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-lg leading-tight">SGS-SWAIS</h1>
             <p className="text-xs text-gray-400">Parent Dashboard</p>
           </div>
           {/* Close button — mobile only */}
