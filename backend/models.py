@@ -34,6 +34,7 @@ from sqlalchemy import (
     Column, Integer, BigInteger, String, Numeric,
     ForeignKey, TIMESTAMP, Date, Text, Boolean, DateTime,
 )
+from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base, DB_PREFIX
@@ -485,6 +486,63 @@ class TicketMessage(Base):
 #     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 #     teacher_info = relationship("TeacherMaster")
 #     student_info = relationship("StudentMaster")
+
+# ── 15. Assessment ────────────────────────────────────────────────────────────
+# Mirrors sgs_assessments exactly — column names unchanged.
+# assessment_type: PostgreSQL ENUM that already exists on RDS.
+# create_type=False → SQLAlchemy never attempts CREATE TYPE; it uses the
+# existing type and emits the correct cast on INSERT.
+
+class Assessment(Base):
+    __tablename__ = f"{DB_PREFIX}assessments"
+
+    assessment_id   = Column(BigInteger, primary_key=True, index=True)
+    teacher_id      = Column(BigInteger, ForeignKey(f"{DB_PREFIX}teacher_master.teacher_id"), nullable=False)
+    title           = Column(String(300))
+    assessment_type = Column(
+        PgEnum('quiz', 'test', 'exam', 'assignment', name='assessment_type', create_type=False),
+        nullable=False,
+        server_default='test',
+    )
+    chapter_id      = Column(BigInteger, ForeignKey(f"{DB_PREFIX}chapter_master.chapter_id"), nullable=True)
+    chapter         = Column(String(300), nullable=True)   # denormalized chapter name
+    assessment_date = Column(Date, nullable=True)
+    max_marks       = Column(Numeric(6, 2), nullable=True)
+    class_name      = Column(String(10), nullable=False)
+    section         = Column(String(5), nullable=False)
+    total_students  = Column(Integer, nullable=True)
+    submitted       = Column(Integer, nullable=True)
+    class_average   = Column(Numeric(5, 2), nullable=True)
+    created_at      = Column(TIMESTAMP, nullable=True)
+    updated_at      = Column(TIMESTAMP, nullable=True)
+    record_status   = Column(String(20), nullable=True)
+    version_no      = Column(Integer, nullable=True)
+
+    teacher_info = relationship("TeacherMaster")
+    chapter_info = relationship("ChapterMaster")
+
+
+# ── 16. AssessmentResult ──────────────────────────────────────────────────────
+# Mirrors sgs_assessment_results exactly — column names unchanged.
+
+class AssessmentResult(Base):
+    __tablename__ = f"{DB_PREFIX}assessment_results"
+
+    result_id      = Column(BigInteger, primary_key=True, index=True)
+    assessment_id  = Column(BigInteger, ForeignKey(f"{DB_PREFIX}assessments.assessment_id"), index=True)
+    student_id     = Column(BigInteger, ForeignKey(f"{DB_PREFIX}student_master.student_id"), index=True)
+    roll_number    = Column(String(20), nullable=False)   # NOT NULL on RDS
+    student_name   = Column(String(150), nullable=True)
+    marks_obtained = Column(Numeric(6, 2), nullable=True)
+    percentage     = Column(Numeric(5, 2), nullable=True)
+    is_absent      = Column(Boolean, nullable=False, default=False)
+    created_at     = Column(TIMESTAMP, nullable=True)
+    updated_at     = Column(TIMESTAMP, nullable=True)
+    record_status  = Column(String(20), nullable=True)
+    version_no     = Column(Integer, nullable=True)
+
+    assessment_info = relationship("Assessment")
+
 
 # ── LeaveRequest ──────────────────────────────────────────────────────────────
 # Leave requests now handled as Communication Center category.

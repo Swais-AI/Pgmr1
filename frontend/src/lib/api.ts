@@ -135,6 +135,26 @@ export const translateText = async (text: string, targetLang: string) => {
 //   return response.data;
 // };
 
+export const fetchAssessmentHistory = async (studentId: number) => {
+  try {
+    const response = await api.get(`/assessments/history/${studentId}`);
+    return response.data;
+  } catch { return []; }
+};
+
+export const fetchAssessmentAnalytics = async (studentId: number) => {
+  try {
+    const response = await api.get(`/assessments/analytics/${studentId}`);
+    return response.data;
+  } catch {
+    return {
+      total_assessments: 0, average_percentage: 0,
+      highest_score: 0, lowest_score: 0,
+      trend_data: [], subject_data: [], subjects: [],
+    };
+  }
+};
+
 export const fetchNotifications = async (studentId: number) => {
   try {
     const response = await api.get(`/notifications/${studentId}`);
