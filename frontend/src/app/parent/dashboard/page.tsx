@@ -6,7 +6,7 @@ import TopBar from '@/components/TopBar';
 import AIInsightPanel from '@/components/AIInsightPanel';
 import { fetchDashboardData } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
-import { useTranslation } from '@/lib/multilingual';
+import { useTranslation, useTranslatedText } from '@/lib/multilingual';
 import { useAIAnalytics } from '@/hooks/useAIAnalytics';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -119,6 +119,12 @@ export default function ParentDashboard() {
 
   const { status: aiStatus, analysis, errorType, generate } = useAIAnalytics('all', parentId);
 
+  // Translate AI insight — holds null until translated so panel stays in
+  // loading state (no English flash). Language switch never regenerates AI.
+  const { displayed: translatedInsight, translating: translatingInsight } =
+    useTranslatedText(analysis, language);
+  const panelStatus = aiStatus === 'success' && translatingInsight ? 'loading' : aiStatus;
+
   useEffect(() => {
     if (!studentId) return; // wait for real studentId from localStorage / ChildSelector
     const load = async () => {
@@ -174,7 +180,7 @@ export default function ParentDashboard() {
   const { displayed: dispRecMsgs,      translating: translatingRecs      } = useTranslation(recMsgTexts,    language);
   const { displayed: dispRecActions }                                        = useTranslation(recActionTexts, language);
 
-  const translating = translatingAlerts || translatingDeadlines || translatingRecs;
+  const translating = translatingAlerts || translatingDeadlines || translatingRecs || translatingInsight;
 
   // Learning Progress: combine assignment completion (60%) + quiz avg (40%)
   const assignmentCompletion = data?.assignment_completion_pct ?? null;
@@ -423,8 +429,8 @@ export default function ParentDashboard() {
               {/* ── Row 3b: AI Parent Insight ── */}
               <SectionCard title="✨ AI Parent Insight">
                 <AIInsightPanel
-                  status={aiStatus}
-                  analysis={analysis}
+                  status={panelStatus}
+                  analysis={translatedInsight}
                   errorType={errorType}
                   onGenerate={generate}
                   buttonLabel="Generate AI Insight"

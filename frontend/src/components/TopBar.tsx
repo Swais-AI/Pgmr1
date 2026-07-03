@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import ChildSelector from './ChildSelector';
 import LanguageSelector from './LanguageSelector';
 import { fetchNotifications } from '@/lib/api';
+import { clearAICache } from '@/lib/aiService';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BellIcon, Bars3Icon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
@@ -200,6 +201,7 @@ export default function TopBar({
   };
 
   const handleLogoutConfirm = () => {
+    clearAICache();
     setShowLogoutDlg(false);
     setShowProfile(false);
     setShowToast(true);
