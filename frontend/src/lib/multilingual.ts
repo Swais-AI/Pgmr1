@@ -97,6 +97,56 @@ export function useTranslation(texts: string[], language: string) {
   return { displayed, translating };
 }
 
+// ── useTranslatedText — single-string translation, no English flash ───────
+// Wraps translateCached for one piece of text (e.g. AI insight response).
+// Holds `displayed` as null while the translation is in-flight so callers
+// can keep a loading state rather than briefly showing raw English.
+//
+// Two-cache model:
+//   AI cache (aiService.ts)        — stores original English AI response
+//   Translation cache (translateCached) — keyed by lang + text
+// Changing language never regenerates AI; only the translate endpoint is called.
+// Stale-request protection: `cancelled` flag set by effect cleanup discards
+// results from previous language or text changes.
+
+export function useTranslatedText(
+  text: string | null,
+  language: string,
+): { displayed: string | null; translating: boolean } {
+  const [displayed,   setDisplayed]   = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+
+  useEffect(() => {
+    if (text === null) {
+      setDisplayed(null);
+      setTranslating(false);
+      return;
+    }
+    if (language === 'en') {
+      setDisplayed(text);
+      setTranslating(false);
+      return;
+    }
+    let cancelled = false;
+    setDisplayed(null);   // hold until translated — prevents English flash
+    setTranslating(true);
+    translateCached(text, language)
+      .then(result => {
+        if (cancelled) return;
+        setDisplayed(result);
+        setTranslating(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDisplayed(text); // fallback to English if translation fails
+        setTranslating(false);
+      });
+    return () => { cancelled = true; };
+  }, [text, language]);
+
+  return { displayed, translating };
+}
+
 // ── Speech-to-text hook ───────────────────────────────────────────────────
 // Uses webkitSpeechRecognition (Chrome/Edge) with SpeechRecognition fallback.
 // `activeField` holds the key of the currently listening field (or null).

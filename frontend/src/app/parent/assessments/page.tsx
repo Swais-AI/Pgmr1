@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
@@ -8,6 +8,9 @@ import {
 import TopBar from '@/components/TopBar';
 import { fetchAssessmentHistory } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
+import AIInsightPanel from '@/components/AIInsightPanel';
+import { useAIAnalytics } from '@/hooks/useAIAnalytics';
+import { useTranslation, useTranslatedText } from '@/lib/multilingual';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -133,6 +136,19 @@ export default function AssessmentsPage() {
 
   const [modalData, setModalData] = useState<Assessment | null>(null);
 
+  const { status: aiStatus, analysis: aiAnalysis, errorType: aiErrorType, generate: generateAI, reset: resetAI } =
+    useAIAnalytics('single', parentId, modalData?.subject ?? '');
+
+  // Reset AI state whenever a different assessment modal is opened
+  const prevSubjectRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const subject = modalData?.subject;
+    if (subject !== prevSubjectRef.current) {
+      prevSubjectRef.current = subject;
+      resetAI();
+    }
+  }, [modalData?.subject, resetAI]);
+
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -203,6 +219,40 @@ export default function AssessmentsPage() {
       return true;
     });
   }, [assessments, subjectFilter, timelineFilter, customStart, customEnd]);
+
+  // ── Translation: card list (parallel arrays indexed by filtered position) ─
+  // Must be after `filtered` to avoid temporal dead zone on the deps array.
+  const cardTitleTexts   = useMemo(() => filtered.map(a => a.title),             [filtered]);
+  const cardChapterTexts = useMemo(() => filtered.map(a => a.chapter_name),      [filtered]);
+  const cardTeacherTexts = useMemo(() => filtered.map(a => a.teacher_name),      [filtered]);
+  const cardSubjectTexts = useMemo(() => filtered.map(a => a.subject),           [filtered]);
+  const cardTypeTexts    = useMemo(() => filtered.map(a => a.assessment_type),   [filtered]);
+  const cardBadgeTexts   = useMemo(() => filtered.map(a => a.performance_badge), [filtered]);
+
+  const { displayed: dispTitles   } = useTranslation(cardTitleTexts,   language);
+  const { displayed: dispChapters } = useTranslation(cardChapterTexts, language);
+  const { displayed: dispTeachers } = useTranslation(cardTeacherTexts, language);
+  const { displayed: dispSubjects } = useTranslation(cardSubjectTexts, language);
+  const { displayed: dispTypes    } = useTranslation(cardTypeTexts,    language);
+  const { displayed: dispBadges   } = useTranslation(cardBadgeTexts,   language);
+
+  // ── Translation: open modal (flat array, indexed 0-5) ──────────────────
+  // [0] title  [1] chapter  [2] teacher  [3] subject  [4] type  [5] badge
+  const modalTextArr = useMemo(() => modalData ? [
+    modalData.title,
+    modalData.chapter_name,
+    modalData.teacher_name,
+    modalData.subject,
+    modalData.assessment_type,
+    modalData.performance_badge,
+  ] : [], [modalData]);
+
+  const { displayed: dM } = useTranslation(modalTextArr, language);
+
+  // ── Translation: AI performance summary (single string, no English flash) ─
+  const { displayed: translatedAISummary, translating: translatingAISummary } =
+    useTranslatedText(aiAnalysis, language);
+  const aiPanelStatus = aiStatus === 'success' && translatingAISummary ? 'loading' : aiStatus;
 
   // ── Summary cards ─────────────────────────────────────────────────────────
 
@@ -475,7 +525,7 @@ export default function AssessmentsPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {filtered.map(a => {
+                  {filtered.map((a, idx) => {
                     const c = statusColor(a.performance_badge);
                     return (
                       <div
@@ -491,27 +541,27 @@ export default function AssessmentsPage() {
                               className="text-xs font-black uppercase tracking-wider"
                               style={{ color: c.hex }}
                             >
-                              {a.subject}
+                              {dispSubjects[idx] ?? a.subject}
                             </p>
                             <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
-                              {a.assessment_type}
+                              {dispTypes[idx] ?? a.assessment_type}
                             </span>
                           </div>
 
                           {/* Title */}
                           <h3 className="text-base font-black text-gray-900 leading-snug line-clamp-2 mb-1">
-                            {a.title}
+                            {dispTitles[idx] ?? a.title}
                           </h3>
 
                           {/* Chapter */}
                           <p className="text-xs text-gray-500 font-semibold truncate mb-2">
-                            📖 {a.chapter_name}
+                            📖 {dispChapters[idx] ?? a.chapter_name}
                           </p>
 
                           {/* Teacher + Date */}
                           <div className="flex flex-wrap items-center gap-2 mb-3">
                             <p className="text-xs font-bold text-gray-400">
-                              👤 {a.teacher_name}
+                              👤 {dispTeachers[idx] ?? a.teacher_name}
                             </p>
                             <span className="text-gray-300">·</span>
                             <p className="text-xs font-bold text-gray-400">
@@ -525,7 +575,7 @@ export default function AssessmentsPage() {
                               className="text-[10px] font-black px-2 py-1 rounded-lg"
                               style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}` }}
                             >
-                              {a.performance_badge}
+                              {dispBadges[idx] ?? a.performance_badge}
                             </span>
                             <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md shrink-0">
                               {a.marks_obtained} / {a.max_marks}
@@ -579,10 +629,10 @@ export default function AssessmentsPage() {
               {/* Title block */}
               <div className="px-6 py-4 border-b border-gray-100">
                 <h2 className="text-2xl font-black text-gray-900 leading-tight">
-                  {modalData.title}
+                  {dM[0] ?? modalData.title}
                 </h2>
                 <p className="text-sm font-bold text-gray-400 mt-1">
-                  {modalData.assessment_type} · {modalData.assessment_date}
+                  {dM[4] ?? modalData.assessment_type} · {modalData.assessment_date}
                 </p>
               </div>
 
@@ -597,7 +647,7 @@ export default function AssessmentsPage() {
                   <CircularProgress pct={modalData.percentage} colorHex={c.hex} />
                   <div>
                     <p className="text-xs font-black uppercase tracking-wider" style={{ color: c.hex }}>
-                      {modalData.performance_badge}
+                      {dM[5] ?? modalData.performance_badge}
                     </p>
                     <p className="text-sm font-bold mt-1" style={{ color: c.text }}>
                       {modalData.marks_obtained} out of {modalData.max_marks} marks
@@ -612,10 +662,10 @@ export default function AssessmentsPage() {
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { label: 'Subject',        value: modalData.subject },
-                      { label: 'Chapter',        value: modalData.chapter_name },
-                      { label: 'Teacher',        value: modalData.teacher_name },
-                      { label: 'Assessment Type', value: modalData.assessment_type },
+                      { label: 'Subject',        value: dM[3] ?? modalData.subject },
+                      { label: 'Chapter',        value: dM[1] ?? modalData.chapter_name },
+                      { label: 'Teacher',        value: dM[2] ?? modalData.teacher_name },
+                      { label: 'Assessment Type', value: dM[4] ?? modalData.assessment_type },
                       { label: 'Date',           value: modalData.assessment_date },
                       { label: 'Max Marks',      value: String(modalData.max_marks) },
                     ].map(({ label, value }) => (
@@ -629,20 +679,20 @@ export default function AssessmentsPage() {
                   </div>
                 </div>
 
-                {/* AI Performance Summary — placeholder for future Gemini integration */}
-                <div className="rounded-2xl border border-dashed border-gray-200 p-4 bg-gray-50">
-                  <div className="flex items-center gap-2 mb-2">
+                {/* AI Performance Summary */}
+                <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50">
+                  <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">✨</span>
                     <p className="text-sm font-black text-gray-700">AI Performance Summary</p>
-                    <span className="text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
-                      Coming Soon
-                    </span>
                   </div>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                    AI insights will be available in a future update. This section will provide
-                    personalised performance analysis, strengths, areas for improvement,
-                    and study recommendations.
-                  </p>
+                  <AIInsightPanel
+                    status={aiPanelStatus}
+                    analysis={translatedAISummary}
+                    errorType={aiErrorType}
+                    onGenerate={generateAI}
+                    buttonLabel="Generate AI Summary"
+                    insightLabel={`AI Insight — ${dM[3] ?? modalData?.subject ?? ''}`}
+                  />
                 </div>
 
               </div>

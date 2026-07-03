@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { fetchQuizHistory, fetchConversations } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
+import { useTranslation } from '@/lib/multilingual';
 
 type QuizDetail = {
   quiz_id: number;
@@ -94,6 +95,25 @@ export default function QuizPerformancePage() {
     return true;
   }), [quizzes, tab, subj, search]);
 
+  // ── Translation: quiz list (parallel arrays indexed by filtered position) ─
+  const filteredTitleTexts   = useMemo(() => filtered.map(q => q.quiz_title),   [filtered]);
+  const filteredSubjectTexts = useMemo(() => filtered.map(q => q.subject),       [filtered]);
+
+  const { displayed: dispQuizTitles   } = useTranslation(filteredTitleTexts,   language);
+  const { displayed: dispQuizSubjects } = useTranslation(filteredSubjectTexts, language);
+
+  // ── Translation: open modal (flat array, indexed 0-4) ──────────────────
+  // [0] quiz_title  [1] subject  [2] teacher_name  [3] suggestion  [4] remarks
+  const modalQuizTexts = useMemo(() => modalData ? [
+    modalData.quiz_title,
+    modalData.subject,
+    modalData.teacher_name,
+    modalData.suggestion,
+    modalData.remarks,
+  ] : [], [modalData]);
+
+  const { displayed: dQM } = useTranslation(modalQuizTexts, language);
+
   const avgScore = quizzes.length ? quizzes.reduce((a, b) => a + b.percentage, 0) / quizzes.length : 0;
   const highest = quizzes.length ? Math.max(...quizzes.map(q => q.percentage)) : 0;
   const lowest = quizzes.length ? Math.min(...quizzes.map(q => q.percentage)) : 0;
@@ -142,9 +162,6 @@ export default function QuizPerformancePage() {
               <h1 className="text-3xl font-black text-gray-900 leading-tight">Quiz Performance</h1>
               <p className="text-sm font-medium text-gray-500 mt-1">Overview of quiz results across all subjects.</p>
             </div>
-            <button className="self-start md:self-auto px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center gap-2">
-              <span>📥</span> Export
-            </button>
           </div>
 
           {isLoading ? (
@@ -214,15 +231,15 @@ export default function QuizPerformancePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {filtered.map(q => {
+                  {filtered.map((q, idx) => {
                     const c = STATUS_COLORS[q.status] || STATUS_COLORS['Average'];
                     return (
                       <div key={q.quiz_id} onClick={() => setModalData(q)}
                         className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group flex items-start gap-4">
                         <CircularProgress pct={q.percentage} colorHex={c.hex} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-black uppercase tracking-wider mb-1" style={{ color: c.hex }}>{q.subject}</p>
-                          <h3 className="text-base font-black text-gray-900 truncate group-hover:text-orange-600 transition-colors">{q.quiz_title}</h3>
+                          <p className="text-xs font-black uppercase tracking-wider mb-1" style={{ color: c.hex }}>{dispQuizSubjects[idx] ?? q.subject}</p>
+                          <h3 className="text-base font-black text-gray-900 truncate group-hover:text-orange-600 transition-colors">{dispQuizTitles[idx] ?? q.quiz_title}</h3>
                           <div className="flex flex-wrap items-center gap-3 mt-2">
                             <p className="text-xs font-bold text-gray-400">{fmt(q.quiz_date)}</p>
                             <p className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
@@ -259,8 +276,8 @@ export default function QuizPerformancePage() {
               </div>
 
               <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-2xl font-black text-gray-900 leading-tight">{modalData.quiz_title}</h2>
-                <p className="text-sm font-bold text-gray-400 mt-1">{modalData.subject} • Conducted on {fmt(modalData.quiz_date)}</p>
+                <h2 className="text-2xl font-black text-gray-900 leading-tight">{dQM[0] ?? modalData.quiz_title}</h2>
+                <p className="text-sm font-bold text-gray-400 mt-1">{dQM[1] ?? modalData.subject} • Conducted on {fmt(modalData.quiz_date)}</p>
               </div>
 
               <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
@@ -280,11 +297,11 @@ export default function QuizPerformancePage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Teacher</p>
-                      <p className="text-sm font-bold text-gray-900">{modalData.teacher_name}</p>
+                      <p className="text-sm font-bold text-gray-900">{dQM[2] ?? modalData.teacher_name}</p>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Subject</p>
-                      <p className="text-sm font-bold text-gray-900">{modalData.subject}</p>
+                      <p className="text-sm font-bold text-gray-900">{dQM[1] ?? modalData.subject}</p>
                     </div>
                   </div>
                 </div>
@@ -295,12 +312,12 @@ export default function QuizPerformancePage() {
                   <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-3">
                     <div>
                       <p className="text-xs font-bold text-gray-400 mb-1">Status Feedback</p>
-                      <p className="text-sm font-bold text-gray-900">{modalData.suggestion}</p>
+                      <p className="text-sm font-bold text-gray-900">{dQM[3] ?? modalData.suggestion}</p>
                     </div>
                     {modalData.remarks && modalData.remarks !== modalData.suggestion && (
                       <div className="pt-3 border-t border-gray-100">
                         <p className="text-xs font-bold text-gray-400 mb-1">Specific Remarks</p>
-                        <p className="text-sm font-medium text-gray-700 italic">"{modalData.remarks}"</p>
+                        <p className="text-sm font-medium text-gray-700 italic">"{dQM[4] ?? modalData.remarks}"</p>
                       </div>
                     )}
                   </div>

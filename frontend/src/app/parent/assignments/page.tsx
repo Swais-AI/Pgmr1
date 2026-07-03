@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { fetchAssignmentsHistory, fetchAssignmentAnalytics, submitAssignment } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
+import AIInsightPanel from '@/components/AIInsightPanel';
+import { useAIAssignmentReport } from '@/hooks/useAIAssignmentReport';
+import { useTranslation, useTranslatedText } from '@/lib/multilingual';
 
 type Assignment = {
   assignment_id: number; assignment_title: string; assignment_text?: string | null;
@@ -44,6 +47,7 @@ const Badge = ({status}:{status:string}) => {
 
 export default function AssignmentsPage() {
   const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
+  const { status: aiStatus, report, errorType: aiErrorType, generate: generateReport } = useAIAssignmentReport(parentId);
   const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [analytics, setAnalytics] = useState<Analytics>({total:0,submitted:0,pending:0,overdue:0,graded:0,completion_pct:0});
@@ -58,6 +62,7 @@ export default function AssignmentsPage() {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{m:string;ok:boolean}|null>(null);
+  const [aiModal, setAiModal] = useState(false);
 
   const notify = (m:string,ok=true) => { setToast({m,ok}); setTimeout(()=>setToast(null),3000); };
 
@@ -82,6 +87,47 @@ export default function AssignmentsPage() {
   }),[assignments,tab,subj,statusF,search]);
 
   const counts = useMemo(()=>TABS.reduce((acc,t)=>({...acc,[t]:t==='All'?assignments.length:assignments.filter(a=>a.status===t).length}),{} as Record<Tab,number>),[assignments]);
+
+  // ── Translation: table rows (parallel arrays indexed by rows position) ──
+  // Must be after `rows` useMemo to avoid temporal dead zone on the deps array.
+  const rowTitleTexts   = useMemo(() => rows.map(a => a.assignment_title),   [rows]);
+  const rowChapterTexts = useMemo(() => rows.map(a => a.chapter_name ?? ''),  [rows]);
+  const rowSubjectTexts = useMemo(() => rows.map(a => a.subject),             [rows]);
+
+  const { displayed: dispRowTitles   } = useTranslation(rowTitleTexts,   language);
+  const { displayed: dispRowChapters } = useTranslation(rowChapterTexts, language);
+  const { displayed: dispRowSubjects } = useTranslation(rowSubjectTexts, language);
+
+  // ── Translation: open drawer (flat array, indexed 0-6) ────────────────
+  // [0] title  [1] chapter  [2] subject  [3] description
+  // [4] teacher_remarks  [5] submission_text  [6] teacher_name
+  // `drawer` is useState so it is always initialised — no TDZ risk.
+  const drawerTextArr = useMemo(() => drawer ? [
+    drawer.assignment_title,
+    drawer.chapter_name   ?? '',
+    drawer.subject,
+    drawer.assignment_text ?? '',
+    drawer.teacher_remarks ?? '',
+    drawer.submission_text ?? '',
+    drawer.teacher_name   ?? '',
+  ] : [], [drawer]);
+
+  const { displayed: dD } = useTranslation(drawerTextArr, language);
+
+  // ── Translation: submit modal target (flat array, indexed 0-2) ────────
+  // [0] title  [1] subject  [2] teacher_name
+  const targetTextArr = useMemo(() => target ? [
+    target.assignment_title,
+    target.subject,
+    target.teacher_name ?? '',
+  ] : [], [target]);
+
+  const { displayed: dT } = useTranslation(targetTextArr, language);
+
+  // ── Translation: AI report (single string, no English flash) ──────────
+  const { displayed: translatedReport, translating: translatingReport } =
+    useTranslatedText(report, language);
+  const reportPanelStatus = aiStatus === 'success' && translatingReport ? 'loading' : aiStatus;
 
   const doSubmit = async () => {
     if(!text.trim()||!target) return;
@@ -120,9 +166,20 @@ export default function AssignmentsPage() {
               <h1 className="text-2xl font-black" style={{color:'#111827'}}>Assignments</h1>
               <p className="text-sm mt-0.5" style={{color:'#6B7280'}}>Track, submit, and monitor all assignments.</p>
             </div>
-            <button onClick={()=>openModal()} className="text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2" style={{background:'#EA580C'}}>
-              + New Submission
-            </button>
+            <div className="flex items-center gap-2">
+              {aiStatus !== 'disabled' && (
+                <button
+                  onClick={() => { setAiModal(true); if (aiStatus === 'idle') generateReport(); }}
+                  className="text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2"
+                  style={{background:'#7C3AED'}}
+                >
+                  ✨ AI Insights
+                </button>
+              )}
+              <button onClick={()=>openModal()} className="text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2" style={{background:'#EA580C'}}>
+                + New Submission
+              </button>
+            </div>
           </div>
 
           {isLoading?(
@@ -205,10 +262,10 @@ export default function AssignmentsPage() {
                             onMouseEnter={e=>(e.currentTarget.style.background='#FFF7ED')}
                             onMouseLeave={e=>(e.currentTarget.style.background='')}>
                             <td className="px-4 py-3">
-                              <p className="font-bold hover:text-orange-600 transition-colors" style={{color:'#111827'}}>{a.assignment_title}</p>
-                              <p className="text-xs mt-0.5" style={{color:'#9CA3AF'}}>{a.chapter_name}</p>
+                              <p className="font-bold hover:text-orange-600 transition-colors" style={{color:'#111827'}}>{dispRowTitles[i] ?? a.assignment_title}</p>
+                              <p className="text-xs mt-0.5" style={{color:'#9CA3AF'}}>{dispRowChapters[i] ?? a.chapter_name}</p>
                             </td>
-                            <td className="px-4 py-3 font-medium whitespace-nowrap" style={{color:'#4B5563'}}>{a.subject}</td>
+                            <td className="px-4 py-3 font-medium whitespace-nowrap" style={{color:'#4B5563'}}>{dispRowSubjects[i] ?? a.subject}</td>
                             <td className="px-4 py-3">
                               <p className="whitespace-nowrap" style={{color:'#4B5563'}}>{fmt(a.due_date)}</p>
                               {dt&&<p className="text-[11px] font-semibold mt-0.5" style={{color:dt.c}}>{dt.t}</p>}
@@ -249,14 +306,14 @@ export default function AssignmentsPage() {
               <div className="flex items-start justify-between gap-4">
                 {/* Left: title block */}
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-3xl font-black break-words leading-tight" style={{color:'#111827'}}>{drawer.assignment_title}</h2>
+                  <h2 className="text-3xl font-black break-words leading-tight" style={{color:'#111827'}}>{dD[0] ?? drawer.assignment_title}</h2>
                   {drawer.chapter_name&&(
                     <p className="text-sm mt-1.5 flex items-center gap-1.5" style={{color:'#6B7280'}}>
-                      <span>📖</span><span className="font-medium">{drawer.chapter_name}</span>
+                      <span>📖</span><span className="font-medium">{dD[1] ?? drawer.chapter_name}</span>
                     </p>
                   )}
                   <div className="flex flex-wrap gap-2.5 mt-4">
-                    <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{background:'#FFF7ED',color:'#EA580C'}}>{drawer.subject}</span>
+                    <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{background:'#FFF7ED',color:'#EA580C'}}>{dD[2] ?? drawer.subject}</span>
                     <Badge status={drawer.status}/>
                   </div>
                 </div>
@@ -276,7 +333,7 @@ export default function AssignmentsPage() {
                   <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#9CA3AF'}}>Description</p>
                   <div className="rounded-xl p-4" style={{background:'#F9FAFB',border:'1px solid #E5E7EB'}}>
                     <p className="text-sm leading-relaxed" style={{color:drawer.assignment_text?'#374151':'#9CA3AF',fontStyle:drawer.assignment_text?'normal':'italic'}}>
-                      {drawer.assignment_text||'No description provided.'}
+                      {drawer.assignment_text ? (dD[3] || drawer.assignment_text) : 'No description provided.'}
                     </p>
                   </div>
                 </div>
@@ -286,12 +343,12 @@ export default function AssignmentsPage() {
                   <p className="text-xs font-bold uppercase tracking-wider mb-2.5" style={{color:'#9CA3AF'}}>Assignment Information</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
-                      {icon:'👤',l:'Teacher',         v:drawer.teacher_name||'–'},
+                      {icon:'👤',l:'Teacher',         v:dD[6] || drawer.teacher_name||'–'},
                       {icon:'📅',l:'Due Date',         v:fmt(drawer.due_date)},
                       {icon:'📤',l:'Submitted On',     v:drawer.submitted_at?fmt(drawer.submitted_at):'Not submitted'},
                       {icon:'🎯',l:'Marks Obtained',   v:drawer.marks_obtained!=null?`${drawer.marks_obtained}`:'–'},
                       {icon:'📊',l:'Total Marks',      v:drawer.total_marks!=null?`${drawer.total_marks}`:'–'},
-                      {icon:'📋',l:'Chapter',          v:drawer.chapter_name||'–'},
+                      {icon:'📋',l:'Chapter',          v:dD[1] || drawer.chapter_name||'–'},
                     ].map(({icon,l,v})=>(
                       <div key={l} className="rounded-xl p-3.5" style={{background:'#fff',border:'1px solid #E5E7EB'}}>
                         <p className="text-[10px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1" style={{color:'#9CA3AF'}}><span>{icon}</span>{l}</p>
@@ -325,9 +382,9 @@ export default function AssignmentsPage() {
                   {drawer.teacher_remarks?(
                     <div className="rounded-xl p-4" style={{background:'#EFF6FF',border:'1px solid #BFDBFE'}}>
                       <p className="text-[10px] font-bold uppercase mb-1.5 flex items-center gap-1.5" style={{color:'#1D4ED8'}}>
-                        <span>💬</span>Feedback from {drawer.teacher_name||'Teacher'}
+                        <span>💬</span>Feedback from {dD[6] || drawer.teacher_name||'Teacher'}
                       </p>
-                      <p className="text-sm leading-relaxed" style={{color:'#1E40AF'}}>"{drawer.teacher_remarks}"</p>
+                      <p className="text-sm leading-relaxed" style={{color:'#1E40AF'}}>"{dD[4] || drawer.teacher_remarks}"</p>
                     </div>
                   ):(
                     <p className="text-sm italic py-1" style={{color:'#9CA3AF'}}>No remarks added yet.</p>
@@ -341,7 +398,7 @@ export default function AssignmentsPage() {
                     <div className="space-y-2.5">
                       <div className="rounded-xl p-4" style={{background:'#F0FDF4',border:'1px solid #BBF7D0'}}>
                         <p className="text-[10px] font-bold uppercase mb-2 flex items-center gap-1.5" style={{color:'#15803D'}}><span>📝</span>Submitted Answer</p>
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{color:'#166534'}}>{drawer.submission_text}</p>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{color:'#166534'}}>{dD[5] || drawer.submission_text}</p>
                         {drawer.submitted_at&&(
                           <p className="text-[11px] mt-2 pt-2 border-t" style={{color:'#86EFAC',borderColor:'#BBF7D0'}}>Submitted on {fmt(drawer.submitted_at)}</p>
                         )}
@@ -433,9 +490,9 @@ export default function AssignmentsPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider" style={{color:'#EA580C'}}>Submitting for</p>
-                      <p className="font-bold mt-0.5" style={{color:'#111827'}}>{target.assignment_title}</p>
-                      <p className="text-xs mt-0.5" style={{color:'#6B7280'}}>{target.subject} · Due {fmt(target.due_date)}</p>
-                      {target.teacher_name&&<p className="text-xs mt-0.5" style={{color:'#6B7280'}}>Teacher: {target.teacher_name}</p>}
+                      <p className="font-bold mt-0.5" style={{color:'#111827'}}>{dT[0] ?? target.assignment_title}</p>
+                      <p className="text-xs mt-0.5" style={{color:'#6B7280'}}>{dT[1] ?? target.subject} · Due {fmt(target.due_date)}</p>
+                      {target.teacher_name&&<p className="text-xs mt-0.5" style={{color:'#6B7280'}}>Teacher: {dT[2] ?? target.teacher_name}</p>}
                     </div>
                     <button onClick={()=>setTarget(null)} className="text-xs font-bold" style={{color:'#EA580C'}}>Change</button>
                   </div>
@@ -467,6 +524,50 @@ export default function AssignmentsPage() {
                 className="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity"
                 style={{background:(!text.trim()||!target||submitting)?'#FED7AA':'#EA580C',cursor:(!text.trim()||!target||submitting)?'not-allowed':'pointer'}}>
                 {submitting?'Submitting…':'Submit Assignment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Insights Modal */}
+      {aiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.45)'}}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style={{maxHeight:'85vh'}}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'#E5E7EB'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">✨</span>
+                <h2 className="text-base font-bold" style={{color:'#111827'}}>AI Assignment Insights</h2>
+              </div>
+              <button
+                onClick={() => setAiModal(false)}
+                className="text-gray-400 hover:text-gray-700 transition-colors text-xl font-bold leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <AIInsightPanel
+                status={reportPanelStatus} analysis={translatedReport} errorType={aiErrorType}
+                onGenerate={generateReport} buttonLabel="Generate AI Report"
+                insightLabel="AI Assignment Summary"
+              />
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-5 py-3 border-t flex justify-end" style={{borderColor:'#E5E7EB'}}>
+              <button
+                onClick={() => setAiModal(false)}
+                className="px-5 py-2 rounded-xl text-sm font-bold border transition-colors"
+                style={{color:'#374151', borderColor:'#D1D5DB'}}
+                onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Close
               </button>
             </div>
           </div>
