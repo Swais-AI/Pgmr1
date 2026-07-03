@@ -3,9 +3,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
+import AIInsightPanel from '@/components/AIInsightPanel';
 import { fetchDashboardData } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
 import { useTranslation } from '@/lib/multilingual';
+import { useAIAnalytics } from '@/hooks/useAIAnalytics';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -114,6 +116,8 @@ export default function ParentDashboard() {
   const [data,      setData]      = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error,     setError]     = useState<string | null>(null);
+
+  const { status: aiStatus, analysis, errorType, generate } = useAIAnalytics('all', parentId);
 
   useEffect(() => {
     if (!studentId) return; // wait for real studentId from localStorage / ChildSelector
@@ -415,6 +419,18 @@ export default function ParentDashboard() {
                   )}
                 </SectionCard>
               </div>
+
+              {/* ── Row 3b: AI Parent Insight ── */}
+              <SectionCard title="✨ AI Parent Insight">
+                <AIInsightPanel
+                  status={aiStatus}
+                  analysis={analysis}
+                  errorType={errorType}
+                  onGenerate={generate}
+                  buttonLabel="Generate AI Insight"
+                  insightLabel="AI Parent Insight"
+                />
+              </SectionCard>
 
               {/* ── Row 4: Recent Activity ── */}
               <SectionCard

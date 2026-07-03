@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { fetchAssignmentsHistory, fetchAssignmentAnalytics, submitAssignment } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
+import AIInsightPanel from '@/components/AIInsightPanel';
+import { useAIAssignmentReport } from '@/hooks/useAIAssignmentReport';
 
 type Assignment = {
   assignment_id: number; assignment_title: string; assignment_text?: string | null;
@@ -44,6 +46,7 @@ const Badge = ({status}:{status:string}) => {
 
 export default function AssignmentsPage() {
   const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
+  const { status: aiStatus, report, errorType: aiErrorType, generate: generateReport } = useAIAssignmentReport(parentId);
   const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [analytics, setAnalytics] = useState<Analytics>({total:0,submitted:0,pending:0,overdue:0,graded:0,completion_pct:0});
@@ -58,6 +61,7 @@ export default function AssignmentsPage() {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{m:string;ok:boolean}|null>(null);
+  const [aiModal, setAiModal] = useState(false);
 
   const notify = (m:string,ok=true) => { setToast({m,ok}); setTimeout(()=>setToast(null),3000); };
 
@@ -120,9 +124,20 @@ export default function AssignmentsPage() {
               <h1 className="text-2xl font-black" style={{color:'#111827'}}>Assignments</h1>
               <p className="text-sm mt-0.5" style={{color:'#6B7280'}}>Track, submit, and monitor all assignments.</p>
             </div>
-            <button onClick={()=>openModal()} className="text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2" style={{background:'#EA580C'}}>
-              + New Submission
-            </button>
+            <div className="flex items-center gap-2">
+              {aiStatus !== 'disabled' && (
+                <button
+                  onClick={() => { setAiModal(true); if (aiStatus === 'idle') generateReport(); }}
+                  className="text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2"
+                  style={{background:'#7C3AED'}}
+                >
+                  ✨ AI Insights
+                </button>
+              )}
+              <button onClick={()=>openModal()} className="text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2" style={{background:'#EA580C'}}>
+                + New Submission
+              </button>
+            </div>
           </div>
 
           {isLoading?(
@@ -467,6 +482,50 @@ export default function AssignmentsPage() {
                 className="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity"
                 style={{background:(!text.trim()||!target||submitting)?'#FED7AA':'#EA580C',cursor:(!text.trim()||!target||submitting)?'not-allowed':'pointer'}}>
                 {submitting?'Submitting…':'Submit Assignment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Insights Modal */}
+      {aiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.45)'}}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style={{maxHeight:'85vh'}}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'#E5E7EB'}}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">✨</span>
+                <h2 className="text-base font-bold" style={{color:'#111827'}}>AI Assignment Insights</h2>
+              </div>
+              <button
+                onClick={() => setAiModal(false)}
+                className="text-gray-400 hover:text-gray-700 transition-colors text-xl font-bold leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <AIInsightPanel
+                status={aiStatus} analysis={report} errorType={aiErrorType}
+                onGenerate={generateReport} buttonLabel="Generate AI Report"
+                insightLabel="AI Assignment Summary"
+              />
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-5 py-3 border-t flex justify-end" style={{borderColor:'#E5E7EB'}}>
+              <button
+                onClick={() => setAiModal(false)}
+                className="px-5 py-2 rounded-xl text-sm font-bold border transition-colors"
+                style={{color:'#374151', borderColor:'#D1D5DB'}}
+                onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Close
               </button>
             </div>
           </div>

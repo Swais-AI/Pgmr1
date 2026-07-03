@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
@@ -8,6 +8,8 @@ import {
 import TopBar from '@/components/TopBar';
 import { fetchAssessmentHistory } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
+import AIInsightPanel from '@/components/AIInsightPanel';
+import { useAIAnalytics } from '@/hooks/useAIAnalytics';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,6 +134,19 @@ export default function AssessmentsPage() {
   const [customEnd,      setCustomEnd]      = useState('');
 
   const [modalData, setModalData] = useState<Assessment | null>(null);
+
+  const { status: aiStatus, analysis: aiAnalysis, errorType: aiErrorType, generate: generateAI, reset: resetAI } =
+    useAIAnalytics('single', parentId, modalData?.subject ?? '');
+
+  // Reset AI state whenever a different assessment modal is opened
+  const prevSubjectRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const subject = modalData?.subject;
+    if (subject !== prevSubjectRef.current) {
+      prevSubjectRef.current = subject;
+      resetAI();
+    }
+  }, [modalData?.subject, resetAI]);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
@@ -629,20 +644,20 @@ export default function AssessmentsPage() {
                   </div>
                 </div>
 
-                {/* AI Performance Summary — placeholder for future Gemini integration */}
-                <div className="rounded-2xl border border-dashed border-gray-200 p-4 bg-gray-50">
-                  <div className="flex items-center gap-2 mb-2">
+                {/* AI Performance Summary */}
+                <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50">
+                  <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">✨</span>
                     <p className="text-sm font-black text-gray-700">AI Performance Summary</p>
-                    <span className="text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
-                      Coming Soon
-                    </span>
                   </div>
-                  <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                    AI insights will be available in a future update. This section will provide
-                    personalised performance analysis, strengths, areas for improvement,
-                    and study recommendations.
-                  </p>
+                  <AIInsightPanel
+                    status={aiStatus}
+                    analysis={aiAnalysis}
+                    errorType={aiErrorType}
+                    onGenerate={generateAI}
+                    buttonLabel="Generate AI Summary"
+                    insightLabel={`AI Insight — ${modalData?.subject ?? ''}`}
+                  />
                 </div>
 
               </div>
