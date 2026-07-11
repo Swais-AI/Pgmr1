@@ -64,3 +64,16 @@ export interface AITranslateResponse {
   translated_text: string;
   original_text: string;
 }
+
+// ── /parent/speak ─────────────────────────────────────────────────────────
+
+export interface AISpeakRequest {
+  text: string;
+  targetLang: string;   // BCP-47 code — aiService maps to human name before sending
+}
+
+// Raw shape returned by the AI server — used only inside aiService.ts
+export interface _AISpeakRaw {
+  status: string;
+  audioData: string;   // base64 MP3
+}
