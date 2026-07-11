@@ -19,9 +19,11 @@ import type {
   AIAnalyticsRequest,
   AITranslateRequest,
   AITranslateResponse,
+  AISpeakRequest,
   _AIAssignmentReportRaw,
   _AIAnalyticsRaw,
   _AITranslateRaw,
+  _AISpeakRaw,
 } from './aiTypes';
 
 // ── Environment ───────────────────────────────────────────────────────────
@@ -215,6 +217,43 @@ export async function translateWithAI(
     };
     cacheSet(cacheKey, response);
     return ok(response);
+  } catch (e: unknown) {
+    if (e instanceof DOMException && e.name === 'AbortError') return err('timeout');
+    return err('network');
+  }
+}
+
+/**
+ * Fetch AI-generated speech audio for a piece of text.
+ * Accepts BCP-47 `targetLang` — maps to human name before sending.
+ * Returns base64 MP3 on success; callers decode to audio.
+ */
+export async function speakWithAI(
+  req: AISpeakRequest,
+): Promise<AIServiceResult<string>> {
+  if (!AI_ENABLED) return disabled();
+  if (!AI_BASE_URL) return disabled();
+  if (!req.text?.trim()) return err('empty-text');
+
+  const humanLang = LANG_CODE_TO_NAME[req.targetLang] ?? 'English';
+
+  const cacheKey = `speak:${req.targetLang}:${req.text}`;
+  const cached = cacheGet<string>(cacheKey);
+  if (cached) return ok(cached);
+
+  try {
+    const res = await fetchWithTimeout(
+      `${AI_BASE_URL}/parent/speak`,
+      { text: req.text, language: humanLang },
+    );
+    if (!res.ok) return err(`http-${res.status}`);
+
+    const raw: _AISpeakRaw = await res.json();
+    const audioData = raw.audioData?.trim();
+    if (!audioData) return err('empty-response');
+
+    cacheSet(cacheKey, audioData);
+    return ok(audioData);
   } catch (e: unknown) {
     if (e instanceof DOMException && e.name === 'AbortError') return err('timeout');
     return err('network');
