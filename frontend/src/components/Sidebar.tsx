@@ -49,7 +49,7 @@ export default function Sidebar() {
         `}
       >
         <div className="p-6 flex items-center gap-3 border-b border-gray-700">
-          <img src="/logo.jpeg" alt="SGS-SWAIS" className="h-10 w-auto" />
+          <img src="/parent/logo.jpeg" alt="SGS-SWAIS" className="h-10 w-auto" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-gray-400">Parent Dashboard</p>
           </div>

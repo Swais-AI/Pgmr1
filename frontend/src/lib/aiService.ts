@@ -111,7 +111,7 @@ export async function fetchAIAssignmentReport(
 
   try {
     const res = await fetchWithTimeout(
-      `${AI_BASE_URL}/api/v1/ai/parent/assignments`,
+      `${AI_BASE_URL}/parent/assignments`,
       { userInfo: req.userInfo },
     );
     if (!res.ok) return err(`http-${res.status}`);
@@ -151,7 +151,7 @@ export async function fetchAIAnalytics(
     if (req.scope === 'single' && req.subject) body.subject = req.subject;
 
     const res = await fetchWithTimeout(
-      `${AI_BASE_URL}/api/v1/ai/parent/analytics`,
+      `${AI_BASE_URL}/parent/analytics`,
       body,
     );
     if (!res.ok) return err(`http-${res.status}`);
@@ -200,7 +200,7 @@ export async function translateWithAI(
 
   try {
     const res = await fetchWithTimeout(
-      `${AI_BASE_URL}/api/v1/ai/parent/translate`,
+      `${AI_BASE_URL}/parent/translate`,
       { text: req.text, targetLanguage: humanLang },
     );
     if (!res.ok) return err(`http-${res.status}`);
