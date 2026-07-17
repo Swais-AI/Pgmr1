@@ -53,27 +53,27 @@ function NoticeModal({
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 shrink-0">
+      <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-white/10">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-xl shrink-0" style={{ color: '#F97316' }}>📢</span>
             <div className="min-w-0">
-              <h3 className="font-bold text-gray-900 break-words">{displayTitle}</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <h3 className="font-bold text-white break-words">{displayTitle}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
                 Posted by {notice.posted_by_name} · {notice.notice_date}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none shrink-0 ml-3">×</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-white text-xl font-bold leading-none shrink-0 ml-3">×</button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
-          <p className="text-sm font-medium text-gray-700 leading-relaxed whitespace-pre-line">{displayText}</p>
+          <p className="text-sm font-medium text-slate-300 leading-relaxed whitespace-pre-line">{displayText}</p>
         </div>
         <div className="px-6 pb-6 pt-2 shrink-0 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-            style={{ borderColor: '#E5E7EB' }}
+            className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-slate-300 hover:bg-white/10 transition-colors"
+            style={{ borderColor: 'rgba(255,255,255,0.15)' }}
           >
             Close
           </button>
@@ -182,7 +182,7 @@ export default function NoticesHistory() {
   };
 
   return (
-    <div className="min-h-full flex flex-col bg-[#F8FAFC] text-gray-800 font-sans">
+    <div className="min-h-full flex flex-col font-sans text-slate-200">
       <TopBar
         studentId={studentId}
         setStudentId={setStudentId}
@@ -200,9 +200,9 @@ export default function NoticesHistory() {
             <div>
               <div className="flex items-center gap-3">
                 <span className="text-3xl" style={{ color: '#F97316' }}>📢</span>
-                <h1 className="text-2xl font-black text-gray-900 tracking-tight">Notices History</h1>
+                <h1 className="text-2xl font-black text-white tracking-tight">Notices History</h1>
               </div>
-              <p className="text-gray-500 font-medium mt-1 ml-11">All important notices and announcements.</p>
+              <p className="text-slate-400 font-medium mt-1 ml-11">All important notices and announcements.</p>
             </div>
 
             {translating && (
@@ -218,10 +218,10 @@ export default function NoticesHistory() {
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-20 text-center bg-white rounded-3xl border border-gray-200 border-dashed">
+            <div className="py-20 text-center bg-white/5 rounded-3xl border border-white/10 border-dashed">
               <p className="text-4xl mb-3">📭</p>
-              <p className="text-gray-900 font-bold text-lg">No notices found.</p>
-              <p className="text-gray-400 text-sm mt-1">There are no announcements for this class right now.</p>
+              <p className="text-white font-bold text-lg">No notices found.</p>
+              <p className="text-slate-400 text-sm mt-1">There are no announcements for this class right now.</p>
             </div>
           ) : (
             <div className={`space-y-4 md:space-y-6 pb-10 transition-opacity duration-200 ${translating ? 'opacity-60' : 'opacity-100'}`}>
@@ -239,7 +239,7 @@ export default function NoticesHistory() {
                       markNoticeRead(notice.notice_id);
                       setModalNotice({ notice, displayTitle, displayText });
                     }}
-                    className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-shadow p-5 md:p-6 flex flex-col md:flex-row gap-5 items-start relative group cursor-pointer ${isUnread ? 'border-orange-200' : 'border-gray-100'}`}
+                    className={`bg-white/5 rounded-2xl border hover:bg-white/10 transition-all p-5 md:p-6 flex flex-col md:flex-row gap-5 items-start relative group cursor-pointer ${isUnread ? 'border-orange-500/40' : 'border-white/10'}`}
                   >
                     {/* Left Icon */}
                     <div className="shrink-0 w-16 h-16 rounded-full bg-orange-50 border-[6px] border-[#FFF7ED] flex items-center justify-center text-orange-500 text-2xl hidden md:flex">
@@ -252,15 +252,15 @@ export default function NoticesHistory() {
                         <div className="shrink-0 w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 text-lg md:hidden">
                           📢
                         </div>
-                        <h3 className="font-black text-gray-900 text-lg leading-tight break-words whitespace-normal">{displayTitle}</h3>
+                        <h3 className="font-black text-white text-lg leading-tight break-words whitespace-normal">{displayTitle}</h3>
                       </div>
 
-                      <p className="text-sm font-medium text-gray-600 leading-relaxed whitespace-pre-line mt-1 md:mt-2 line-clamp-3">
+                      <p className="text-sm font-medium text-slate-300 leading-relaxed whitespace-pre-line mt-1 md:mt-2 line-clamp-3">
                         {displayText}
                       </p>
 
-                      <p className="text-xs font-bold text-gray-400 mt-4">
-                        Posted by: <span className="text-gray-600">{notice.posted_by_name}</span>
+                      <p className="text-xs font-bold text-slate-400 mt-4">
+                        Posted by: <span className="text-slate-300">{notice.posted_by_name}</span>
                       </p>
                     </div>
 
@@ -288,7 +288,7 @@ export default function NoticesHistory() {
                 );
               })}
 
-              <div className="flex items-center justify-center gap-1.5 mt-8 text-xs font-bold text-gray-400">
+              <div className="flex items-center justify-center gap-1.5 mt-8 text-xs font-bold text-slate-500">
                 <span>ⓘ</span> Showing latest notices on top
               </div>
             </div>

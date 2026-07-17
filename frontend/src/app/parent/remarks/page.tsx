@@ -66,25 +66,25 @@ function RemarkModal({
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 shrink-0">
+      <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-white/10">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-xl">💬</span>
             <div>
-              <h3 className="font-bold text-gray-900">{remark.teacher_name}</h3>
-              <p className="text-xs text-gray-400 mt-0.5">{remark.subject} · {remark.date}</p>
+              <h3 className="font-bold text-white">{remark.teacher_name}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">{remark.subject} · {remark.date}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">×</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-white text-xl font-bold leading-none">×</button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
-          <p className="text-sm font-medium text-gray-700 leading-relaxed whitespace-pre-line">{displayText}</p>
+          <p className="text-sm font-medium text-slate-300 leading-relaxed whitespace-pre-line">{displayText}</p>
         </div>
         <div className="px-6 pb-6 pt-2 shrink-0 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-            style={{ borderColor: '#E5E7EB' }}
+            className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-slate-300 hover:bg-white/10 transition-colors"
+            style={{ borderColor: 'rgba(255,255,255,0.15)' }}
           >
             Close
           </button>
@@ -168,7 +168,7 @@ export default function RemarksHistory() {
   };
 
   return (
-    <div className="min-h-full flex flex-col bg-[#F8FAFC] text-gray-800 font-sans">
+    <div className="min-h-full flex flex-col font-sans text-slate-200">
       <TopBar
         studentId={studentId}
         setStudentId={setStudentId}
@@ -186,9 +186,9 @@ export default function RemarksHistory() {
             <div>
               <div className="flex items-center gap-3">
                 <span className="text-3xl" style={{ color: '#A855F7' }}>💬</span>
-                <h1 className="text-2xl font-black text-gray-900 tracking-tight">Teacher Remarks History</h1>
+                <h1 className="text-2xl font-black text-white tracking-tight">Teacher Remarks History</h1>
               </div>
-              <p className="text-gray-500 font-medium mt-1 ml-11">
+              <p className="text-slate-400 font-medium mt-1 ml-11">
                 View all remarks and feedback shared by teachers.
               </p>
             </div>
@@ -200,14 +200,15 @@ export default function RemarksHistory() {
                   Translating…
                 </span>
               )}
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
-                <span className="text-gray-400">🔻</span>
+              <div className="flex items-center gap-2 rounded-xl px-4 py-2" style={{background:'#1e293b',border:'1px solid rgba(255,255,255,0.1)'}}>
+                <span className="text-slate-400">🔻</span>
                 <select
                   value={subj}
                   onChange={e => setSubj(e.target.value)}
-                  className="bg-transparent border-none outline-none text-sm font-bold text-gray-700 min-w-[120px] cursor-pointer appearance-none"
+                  className="border-none outline-none text-sm font-bold text-white min-w-[120px] cursor-pointer appearance-none"
+                  style={{background:'#1e293b',color:'#F8FAFC'}}
                 >
-                  {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                  {subjects.map(s => <option key={s} value={s} style={{background:'#1e293b',color:'#F8FAFC'}}>{s}</option>)}
                 </select>
               </div>
             </div>
@@ -218,14 +219,14 @@ export default function RemarksHistory() {
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-20 text-center bg-white rounded-3xl border border-gray-200 border-dashed">
+            <div className="py-20 text-center bg-white/5 rounded-3xl border border-white/10 border-dashed">
               <p className="text-4xl mb-3">📭</p>
-              <p className="text-gray-900 font-bold text-lg">No remarks found.</p>
-              <p className="text-gray-400 text-sm mt-1">Check back later for teacher feedback.</p>
+              <p className="text-white font-bold text-lg">No remarks found.</p>
+              <p className="text-slate-400 text-sm mt-1">Check back later for teacher feedback.</p>
             </div>
           ) : (
             <div className="relative pb-10">
-              <div className="absolute left-[13px] top-5 bottom-0 w-0.5 bg-gray-200 z-0 hidden sm:block" />
+              <div className="absolute left-[13px] top-5 bottom-0 w-0.5 bg-white/10 z-0 hidden sm:block" />
 
               <div className={`space-y-6 relative z-10 transition-opacity duration-200 ${translating ? 'opacity-60' : 'opacity-100'}`}>
                 {filtered.map((remark, index) => {
@@ -249,7 +250,7 @@ export default function RemarksHistory() {
                       {/* Content card — click to open modal */}
                       <div
                         onClick={() => setModalRemark({ remark, displayText })}
-                        className={`flex-1 bg-white rounded-2xl border shadow-sm hover:shadow-md transition-shadow p-4 sm:p-5 cursor-pointer ${isUnread ? 'border-purple-200' : 'border-gray-100'}`}
+                        className={`flex-1 bg-white/5 rounded-2xl border hover:bg-white/10 transition-all p-4 sm:p-5 cursor-pointer ${isUnread ? 'border-purple-500/40' : 'border-white/10'}`}
                       >
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3">
@@ -260,14 +261,14 @@ export default function RemarksHistory() {
                               {initials}
                             </div>
                             <div>
-                              <h3 className="font-black text-gray-900 text-sm sm:text-base leading-tight">
+                              <h3 className="font-black text-white text-sm sm:text-base leading-tight">
                                 {remark.teacher_name}
                               </h3>
                               <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-400 bg-white/10 px-2 py-0.5 rounded border border-white/10">
                                   {remark.subject}
                                 </span>
-                                <span className="text-[10px] sm:text-xs font-bold text-gray-400">
+                                <span className="text-[10px] sm:text-xs font-bold text-slate-400">
                                   {remark.date}
                                 </span>
                               </div>
@@ -290,7 +291,7 @@ export default function RemarksHistory() {
                         </div>
 
                         {/* Remark preview text */}
-                        <p className="text-sm font-medium text-gray-700 leading-relaxed sm:ml-14 line-clamp-3">
+                        <p className="text-sm font-medium text-slate-300 leading-relaxed sm:ml-14 line-clamp-3">
                           {displayText}
                         </p>
 
@@ -318,7 +319,7 @@ export default function RemarksHistory() {
                 })}
               </div>
 
-              <div className="flex items-center justify-center gap-1.5 mt-8 text-xs font-bold text-gray-400">
+              <div className="flex items-center justify-center gap-1.5 mt-8 text-xs font-bold text-slate-500">
                 <span>ⓘ</span> Showing latest remarks on top
               </div>
             </div>

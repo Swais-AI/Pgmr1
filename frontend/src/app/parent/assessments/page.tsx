@@ -82,7 +82,7 @@ const CircularProgress = ({ pct, colorHex }: { pct: number; colorHex: string }) 
   return (
     <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
       <svg className="transform -rotate-90" width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="#F3F4F6" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} fill="none" />
         <circle cx={size / 2} cy={size / 2} r={r} stroke={colorHex} strokeWidth={stroke} fill="none"
           strokeDasharray={circum} strokeDashoffset={offset} strokeLinecap="round" />
       </svg>
@@ -92,31 +92,31 @@ const CircularProgress = ({ pct, colorHex }: { pct: number; colorHex: string }) 
 };
 
 const StatCard = ({ label, value, sub }: { label: string; value: string; sub: string }) => (
-  <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-    <p className="text-3xl font-black text-gray-900">{value}</p>
-    <p className="text-xs font-semibold text-gray-400 mt-1">{sub}</p>
+  <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+    <p className="text-3xl font-black text-white">{value}</p>
+    <p className="text-xs font-semibold text-slate-400 mt-1">{sub}</p>
   </div>
 );
 
 // ── Skeleton placeholders ─────────────────────────────────────────────────────
 
 const SkeletonCard = () => (
-  <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm animate-pulse">
-    <div className="h-3 bg-gray-200 rounded w-2/3 mb-3" />
-    <div className="h-8 bg-gray-200 rounded w-1/2 mb-2" />
-    <div className="h-3 bg-gray-200 rounded w-1/3" />
+  <div className="bg-white/5 rounded-2xl border border-white/10 p-5 animate-pulse">
+    <div className="h-3 bg-white/10 rounded w-2/3 mb-3" />
+    <div className="h-8 bg-white/10 rounded w-1/2 mb-2" />
+    <div className="h-3 bg-white/10 rounded w-1/3" />
   </div>
 );
 
 const SkeletonAssessmentCard = () => (
-  <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm animate-pulse flex gap-4 items-start">
-    <div className="w-14 h-14 rounded-full bg-gray-200 shrink-0" />
+  <div className="bg-white/5 rounded-2xl border border-white/10 p-5 animate-pulse flex gap-4 items-start">
+    <div className="w-14 h-14 rounded-full bg-white/10 shrink-0" />
     <div className="flex-1 space-y-2">
-      <div className="h-3 bg-gray-200 rounded w-1/4" />
-      <div className="h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-3 bg-gray-200 rounded w-1/2" />
-      <div className="h-6 bg-gray-200 rounded w-1/3" />
+      <div className="h-3 bg-white/10 rounded w-1/4" />
+      <div className="h-4 bg-white/10 rounded w-3/4" />
+      <div className="h-3 bg-white/10 rounded w-1/2" />
+      <div className="h-6 bg-white/10 rounded w-1/3" />
     </div>
   </div>
 );
@@ -291,7 +291,7 @@ export default function AssessmentsPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-full flex flex-col font-sans bg-[#F9FAFB]">
+    <div className="min-h-full flex flex-col font-sans">
       <TopBar
         studentId={studentId}
         setStudentId={setStudentId}
@@ -306,20 +306,20 @@ export default function AssessmentsPage() {
 
           {/* ── HEADER ────────────────────────────────────────────────────── */}
           <div>
-            <h1 className="text-3xl font-black text-gray-900 leading-tight">Assessments</h1>
-            <p className="text-sm font-medium text-gray-500 mt-1">
+            <h1 className="text-3xl font-black text-white leading-tight">Assessments</h1>
+            <p className="text-sm font-medium text-slate-400 mt-1">
               View your child&apos;s assessment history and academic performance.
             </p>
           </div>
 
           {/* ── FILTER BAR ────────────────────────────────────────────────── */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 space-y-3">
+          <div className="bg-white/5 rounded-xl border border-white/10 p-3 space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               {/* Subject filter */}
               <select
                 value={subjectFilter}
                 onChange={e => setSubjectFilter(e.target.value)}
-                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[160px]"
+                className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[160px]"
               >
                 {subjects.map(s => (
                   <option key={s} value={s}>{s}</option>
@@ -330,7 +330,7 @@ export default function AssessmentsPage() {
               <select
                 value={timelineFilter}
                 onChange={e => { setTimelineFilter(e.target.value); setCustomStart(''); setCustomEnd(''); }}
-                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[200px]"
+                className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[200px]"
               >
                 {TIMELINE_OPTIONS.map(t => (
                   <option key={t} value={t}>{t}</option>
@@ -338,7 +338,7 @@ export default function AssessmentsPage() {
               </select>
 
               {filtered.length > 0 && (
-                <span className="text-xs font-semibold text-gray-400 ml-auto">
+                <span className="text-xs font-semibold text-slate-400 ml-auto">
                   {filtered.length} result{filtered.length !== 1 ? 's' : ''}
                 </span>
               )}
@@ -346,23 +346,23 @@ export default function AssessmentsPage() {
 
             {/* Custom date range inputs */}
             {timelineFilter === 'Custom Date Range' && (
-              <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-gray-100">
+              <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-white/10">
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-bold text-gray-500 whitespace-nowrap">From</label>
+                  <label className="text-xs font-bold text-slate-400 whitespace-nowrap">From</label>
                   <input
                     type="date"
                     value={customStart}
                     onChange={e => setCustomStart(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg px-3 py-2 outline-none"
+                    className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none"
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-bold text-gray-500 whitespace-nowrap">To</label>
+                  <label className="text-xs font-bold text-slate-400 whitespace-nowrap">To</label>
                   <input
                     type="date"
                     value={customEnd}
                     onChange={e => setCustomEnd(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg px-3 py-2 outline-none"
+                    className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none"
                   />
                 </div>
               </div>
@@ -410,11 +410,11 @@ export default function AssessmentsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                   {/* Chart 1 — Performance Trend */}
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                    <p className="text-xs font-black uppercase tracking-wider text-gray-400 mb-1">
+                  <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-1">
                       Performance Trend
                     </p>
-                    <p className="text-sm font-bold text-gray-700 mb-4">
+                    <p className="text-sm font-bold text-slate-300 mb-4">
                       Percentage over time
                     </p>
                     <div style={{ height: 240 }}>
@@ -423,24 +423,26 @@ export default function AssessmentsPage() {
                           data={trendData}
                           margin={{ top: 5, right: 10, left: -20, bottom: 40 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
                           <XAxis
                             dataKey="label"
-                            tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }}
+                            tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: 600 }}
                             angle={-40}
                             textAnchor="end"
                             interval="preserveStartEnd"
                           />
                           <YAxis
                             domain={[0, 100]}
-                            tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }}
+                            tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: 600 }}
                             tickFormatter={(v: number) => `${v}%`}
                           />
                           <Tooltip
                             formatter={(v: unknown) => [`${v ?? 0}%`, 'Percentage']}
                             contentStyle={{
                               borderRadius: 12,
-                              border: '1px solid #E5E7EB',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              background: '#1e293b',
+                              color: '#f1f5f9',
                               fontSize: 12,
                               fontWeight: 600,
                             }}
@@ -459,11 +461,11 @@ export default function AssessmentsPage() {
                   </div>
 
                   {/* Chart 2 — Subject-wise Performance */}
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                    <p className="text-xs font-black uppercase tracking-wider text-gray-400 mb-1">
+                  <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-1">
                       Subject-wise Performance
                     </p>
-                    <p className="text-sm font-bold text-gray-700 mb-4">
+                    <p className="text-sm font-bold text-slate-300 mb-4">
                       Average percentage by subject
                     </p>
                     {subjectData.length > 0 ? (
@@ -492,7 +494,9 @@ export default function AssessmentsPage() {
                               formatter={(v: unknown) => [`${v ?? 0}%`, 'Avg %']}
                               contentStyle={{
                                 borderRadius: 12,
-                                border: '1px solid #E5E7EB',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: '#1e293b',
+                                color: '#f1f5f9',
                                 fontSize: 12,
                                 fontWeight: 600,
                               }}
@@ -500,13 +504,13 @@ export default function AssessmentsPage() {
                             <Legend
                               iconType="circle"
                               iconSize={8}
-                              wrapperStyle={{ fontSize: 11, fontWeight: 600 }}
+                              wrapperStyle={{ fontSize: 11, fontWeight: 600, color: '#94A3B8' }}
                             />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
                     ) : (
-                      <div className="h-60 flex items-center justify-center text-gray-400 text-sm font-semibold">
+                      <div className="h-60 flex items-center justify-center text-slate-400 text-sm font-semibold">
                         No data for selected filters
                       </div>
                     )}
@@ -516,10 +520,10 @@ export default function AssessmentsPage() {
 
               {/* ── ASSESSMENT CARDS ──────────────────────────────────────── */}
               {filtered.length === 0 ? (
-                <div className="py-20 text-center bg-white rounded-2xl border border-gray-200 border-dashed">
+                <div className="py-20 text-center bg-white/5 rounded-2xl border border-white/10 border-dashed">
                   <p className="text-4xl mb-3">📋</p>
-                  <p className="text-gray-900 font-bold">No assessments found.</p>
-                  <p className="text-gray-400 text-sm mt-1">
+                  <p className="text-white font-bold">No assessments found.</p>
+                  <p className="text-slate-400 text-sm mt-1">
                     Try adjusting your subject or timeline filters.
                   </p>
                 </div>
@@ -530,7 +534,7 @@ export default function AssessmentsPage() {
                     return (
                       <div
                         key={a.result_id}
-                        className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-all flex items-start gap-4"
+                        className="bg-white/5 rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-all flex items-start gap-4"
                       >
                         <CircularProgress pct={a.percentage} colorHex={c.hex} />
 
@@ -543,28 +547,28 @@ export default function AssessmentsPage() {
                             >
                               {dispSubjects[idx] ?? a.subject}
                             </p>
-                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+                            <span className="text-[10px] font-bold text-slate-400 bg-white/10 px-2 py-0.5 rounded-md">
                               {dispTypes[idx] ?? a.assessment_type}
                             </span>
                           </div>
 
                           {/* Title */}
-                          <h3 className="text-base font-black text-gray-900 leading-snug line-clamp-2 mb-1">
+                          <h3 className="text-base font-black text-white leading-snug line-clamp-2 mb-1">
                             {dispTitles[idx] ?? a.title}
                           </h3>
 
                           {/* Chapter */}
-                          <p className="text-xs text-gray-500 font-semibold truncate mb-2">
+                          <p className="text-xs text-slate-400 font-semibold truncate mb-2">
                             📖 {dispChapters[idx] ?? a.chapter_name}
                           </p>
 
                           {/* Teacher + Date */}
                           <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <p className="text-xs font-bold text-gray-400">
+                            <p className="text-xs font-bold text-slate-400">
                               👤 {dispTeachers[idx] ?? a.teacher_name}
                             </p>
-                            <span className="text-gray-300">·</span>
-                            <p className="text-xs font-bold text-gray-400">
+                            <span className="text-slate-600">·</span>
+                            <p className="text-xs font-bold text-slate-400">
                               {a.assessment_date}
                             </p>
                           </div>
@@ -577,7 +581,7 @@ export default function AssessmentsPage() {
                             >
                               {dispBadges[idx] ?? a.performance_badge}
                             </span>
-                            <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md shrink-0">
+                            <span className="text-xs font-bold text-slate-400 bg-white/10 px-2 py-0.5 rounded-md shrink-0">
                               {a.marks_obtained} / {a.max_marks}
                             </span>
                           </div>
@@ -585,7 +589,7 @@ export default function AssessmentsPage() {
                           {/* View Details */}
                           <button
                             onClick={() => setModalData(a)}
-                            className="mt-3 w-full text-xs font-bold py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 transition-colors"
+                            className="mt-3 w-full text-xs font-bold py-2 rounded-xl border border-white/10 text-slate-300 hover:bg-orange-500/10 hover:border-orange-500/40 hover:text-orange-400 transition-colors"
                           >
                             View Details
                           </button>
@@ -610,28 +614,28 @@ export default function AssessmentsPage() {
           >
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-[100]" />
             <div
-              className="relative bg-white rounded-3xl shadow-2xl flex flex-col w-full max-w-lg overflow-hidden z-[110]"
+              className="relative bg-slate-800 rounded-3xl shadow-2xl flex flex-col w-full max-w-lg overflow-hidden z-[110] border border-white/10"
               onClick={e => e.stopPropagation()}
             >
               {/* Modal header controls */}
               <div className="shrink-0 p-6 pb-0 flex justify-between items-start">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-gray-100">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-white/10">
                   📝
                 </div>
                 <button
                   onClick={() => setModalData(null)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors text-xl font-bold"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-white/10 hover:text-white transition-colors text-xl font-bold"
                 >
                   ×
                 </button>
               </div>
 
               {/* Title block */}
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-2xl font-black text-gray-900 leading-tight">
+              <div className="px-6 py-4 border-b border-white/10">
+                <h2 className="text-2xl font-black text-white leading-tight">
                   {dM[0] ?? modalData.title}
                 </h2>
-                <p className="text-sm font-bold text-gray-400 mt-1">
+                <p className="text-sm font-bold text-slate-400 mt-1">
                   {dM[4] ?? modalData.assessment_type} · {modalData.assessment_date}
                 </p>
               </div>
@@ -657,7 +661,7 @@ export default function AssessmentsPage() {
 
                 {/* Assessment details grid */}
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-3">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">
                     Assessment Information
                   </p>
                   <div className="grid grid-cols-2 gap-3">
@@ -669,21 +673,21 @@ export default function AssessmentsPage() {
                       { label: 'Date',           value: modalData.assessment_date },
                       { label: 'Max Marks',      value: String(modalData.max_marks) },
                     ].map(({ label, value }) => (
-                      <div key={label} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                      <div key={label} className="p-3 bg-white/5 rounded-xl border border-white/10">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                           {label}
                         </p>
-                        <p className="text-sm font-bold text-gray-900 leading-snug">{value}</p>
+                        <p className="text-sm font-bold text-white leading-snug">{value}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* AI Performance Summary */}
-                <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50">
+                <div className="rounded-2xl border border-white/10 p-4 bg-white/5">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-lg">✨</span>
-                    <p className="text-sm font-black text-gray-700">AI Performance Summary</p>
+                    <p className="text-sm font-black text-white">AI Performance Summary</p>
                   </div>
                   <AIInsightPanel
                     status={aiPanelStatus}

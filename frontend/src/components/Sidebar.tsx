@@ -42,13 +42,13 @@ export default function Sidebar() {
 
       <aside
         className={`
-          w-64 bg-gray-800 text-white flex flex-col h-screen
-          fixed left-0 top-0 overflow-y-auto z-40
+          w-64 bg-slate-900/95 backdrop-blur-md text-white flex flex-col h-screen
+          fixed left-0 top-0 overflow-y-auto z-40 border-r border-white/5
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
-        <div className="p-6 flex items-center gap-3 border-b border-gray-700">
+        <div className="p-6 flex items-center gap-3 border-b border-white/10">
           <img src="/parent/logo.jpeg" alt="SGS-SWAIS" className="h-10 w-auto" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-gray-400">Parent Dashboard</p>
@@ -74,7 +74,7 @@ export default function Sidebar() {
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
                         ? 'bg-orange-600 text-white'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
                     }`}
                   >
                     <span>{item.icon}</span>
@@ -87,7 +87,7 @@ export default function Sidebar() {
         </nav>
 
         <div className="p-4 mt-auto">
-          <div className="bg-[#F3E8DD] rounded-xl p-4 text-center text-gray-800 shadow-sm">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center text-slate-300 shadow-sm">
             <div className="flex justify-center mb-2">
               <span className="text-4xl">👨‍👩‍👦</span>
             </div>
