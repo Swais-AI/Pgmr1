@@ -152,7 +152,7 @@ export default function AssignmentsPage() {
   ];
 
   return (
-    <div className="min-h-full flex flex-col font-sans" style={{background:'#F9FAFB'}}>
+    <div className="min-h-full flex flex-col font-sans">
       <TopBar studentId={studentId} setStudentId={setStudentId} parentId={parentId} language={language} setLanguage={setLanguage} isLoading={isLoading}/>
 
       {toast&&<div className={`fixed top-4 right-4 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold text-white ${toast.ok?'bg-green-600':'bg-red-600'}`}>{toast.m}</div>}
@@ -163,8 +163,8 @@ export default function AssignmentsPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-black" style={{color:'#111827'}}>Assignments</h1>
-              <p className="text-sm mt-0.5" style={{color:'#6B7280'}}>Track, submit, and monitor all assignments.</p>
+              <h1 className="text-2xl font-black" style={{color:'#F8FAFC'}}>Assignments</h1>
+              <p className="text-sm mt-0.5" style={{color:'#94A3B8'}}>Track, submit, and monitor all assignments.</p>
             </div>
             <div className="flex items-center gap-2">
               {aiStatus !== 'disabled' && (
@@ -189,34 +189,34 @@ export default function AssignmentsPage() {
               {/* Metric Cards */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {cards.map(c=>(
-                  <div key={c.label} className="bg-white rounded-xl border p-4 shadow-sm" style={{borderColor:'#E5E7EB'}}>
+                  <div key={c.label} className="bg-slate-800 rounded-xl border p-4" style={{borderColor:'rgba(255,255,255,0.1)'}}>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base" style={{background:c.c+'18'}}>{c.icon}</div>
-                      <span className="text-xs font-semibold" style={{color:'#6B7280'}}>{c.label}</span>
+                      <span className="text-xs font-semibold" style={{color:'#94A3B8'}}>{c.label}</span>
                     </div>
-                    <p className="text-2xl font-black" style={{color:'#111827'}}>{c.val}</p>
-                    <p className="text-[11px] mt-0.5" style={{color:'#9CA3AF'}}>{c.note}</p>
+                    <p className="text-2xl font-black" style={{color:'#F8FAFC'}}>{c.val}</p>
+                    <p className="text-[11px] mt-0.5" style={{color:'#64748B'}}>{c.note}</p>
                   </div>
                 ))}
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border shadow-sm p-3 flex flex-wrap gap-2.5 items-center" style={{borderColor:'#E5E7EB'}}>
+              <div className="bg-slate-800 rounded-xl border p-3 flex flex-wrap gap-2.5 items-center" style={{borderColor:'rgba(255,255,255,0.1)'}}>
                 <select value={subj} onChange={e=>setSubj(e.target.value)}
                   className="text-sm font-medium rounded-lg px-3 py-2 border outline-none cursor-pointer"
-                  style={{color:'#111827',borderColor:'#D1D5DB',background:'#FFFFFF'}}>
-                  {subjects.map(s=><option key={s} value={s} style={{color:'#111827'}}>{s==='All'?'All Subjects':s}</option>)}
+                  style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',background:'#334155'}}>
+                  {subjects.map(s=><option key={s} value={s} style={{background:'#334155',color:'#F8FAFC'}}>{s==='All'?'All Subjects':s}</option>)}
                 </select>
                 <select value={statusF} onChange={e=>setStatusF(e.target.value)}
                   className="text-sm font-medium rounded-lg px-3 py-2 border outline-none cursor-pointer"
-                  style={{color:'#111827',borderColor:'#D1D5DB',background:'#FFFFFF'}}>
-                  {['All','Upcoming','Ongoing','Submitted','Graded','Overdue'].map(s=><option key={s} value={s} style={{color:'#111827'}}>{s==='All'?'All Status':s}</option>)}
+                  style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',background:'#334155'}}>
+                  {['All','Upcoming','Ongoing','Submitted','Graded','Overdue'].map(s=><option key={s} value={s} style={{background:'#334155',color:'#F8FAFC'}}>{s==='All'?'All Status':s}</option>)}
                 </select>
                 <div className="flex-1 relative min-w-[200px]">
                   <span className="absolute left-3 top-2.5 text-base">🔍</span>
                   <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by title, subject, chapter..."
-                    className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg outline-none"
-                    style={{color:'#111827',borderColor:'#D1D5DB',background:'#FFFFFF'}}/>
+                    className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg outline-none placeholder:text-slate-400"
+                    style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',background:'#334155'}}/>
                 </div>
                 {(search||subj!=='All'||statusF!=='All')&&(
                   <button onClick={()=>{setSearch('');setSubj('All');setStatusF('All');}} className="text-xs font-semibold" style={{color:'#EA580C'}}>Clear ×</button>
@@ -224,12 +224,12 @@ export default function AssignmentsPage() {
               </div>
 
               {/* Tabs */}
-              <div className="flex border-b overflow-x-auto" style={{borderColor:'#E5E7EB'}}>
+              <div className="flex border-b overflow-x-auto" style={{borderColor:'rgba(255,255,255,0.1)'}}>
                 {TABS.map(t=>(
                   <button key={t} onClick={()=>setTab(t)} className="px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors flex items-center gap-1.5"
-                    style={{borderColor:tab===t?'#EA580C':'transparent',color:tab===t?'#EA580C':'#6B7280'}}>
+                    style={{borderColor:tab===t?'#EA580C':'transparent',color:tab===t?'#EA580C':'#94A3B8'}}>
                     {t}
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{background:tab===t?'#FFF7ED':'#F3F4F6',color:tab===t?'#EA580C':'#9CA3AF'}}>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{background:tab===t?'rgba(234,88,12,0.15)':'rgba(255,255,255,0.08)',color:tab===t?'#EA580C':'#64748B'}}>
                       {counts[t]}
                     </span>
                   </button>
@@ -237,13 +237,13 @@ export default function AssignmentsPage() {
               </div>
 
               {/* Table */}
-              <div className="bg-white rounded-xl border shadow-sm overflow-hidden" style={{borderColor:'#E5E7EB'}}>
+              <div className="bg-slate-900 rounded-xl border overflow-hidden" style={{borderColor:'rgba(255,255,255,0.1)'}}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead style={{background:'#F9FAFB',borderBottom:'1px solid #E5E7EB'}}>
+                    <thead style={{background:'#1e293b',borderBottom:'1px solid rgba(255,255,255,0.1)'}}>
                       <tr>
                         {['Assignment','Subject','Due Date','Submitted On','Marks','Status','Action'].map(h=>(
-                          <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider" style={{color:'#9CA3AF'}}>{h}</th>
+                          <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider" style={{color:'#94A3B8'}}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -251,32 +251,32 @@ export default function AssignmentsPage() {
                       {rows.length===0?(
                         <tr><td colSpan={7} className="text-center py-14">
                           <div className="text-3xl mb-2">📭</div>
-                          <p className="font-semibold" style={{color:'#4B5563'}}>No assignments found</p>
-                          <p className="text-xs mt-1" style={{color:'#9CA3AF'}}>Try adjusting your filters</p>
+                          <p className="font-semibold" style={{color:'#CBD5E1'}}>No assignments found</p>
+                          <p className="text-xs mt-1" style={{color:'#64748B'}}>Try adjusting your filters</p>
                         </td></tr>
                       ):rows.map((a,i)=>{
                         const dt=daysTag(a.due_date,a.status);
                         return(
                           <tr key={i} onClick={()=>setDrawer(a)}
-                            className="transition-colors border-b cursor-pointer" style={{borderColor:'#F3F4F6'}}
-                            onMouseEnter={e=>(e.currentTarget.style.background='#FFF7ED')}
+                            className="transition-colors border-b cursor-pointer" style={{borderColor:'rgba(255,255,255,0.05)'}}
+                            onMouseEnter={e=>(e.currentTarget.style.background='rgba(234,88,12,0.1)')}
                             onMouseLeave={e=>(e.currentTarget.style.background='')}>
                             <td className="px-4 py-3">
-                              <p className="font-bold hover:text-orange-600 transition-colors" style={{color:'#111827'}}>{dispRowTitles[i] ?? a.assignment_title}</p>
-                              <p className="text-xs mt-0.5" style={{color:'#9CA3AF'}}>{dispRowChapters[i] ?? a.chapter_name}</p>
+                              <p className="font-bold hover:text-orange-600 transition-colors" style={{color:'#F8FAFC'}}>{dispRowTitles[i] ?? a.assignment_title}</p>
+                              <p className="text-xs mt-0.5" style={{color:'#64748B'}}>{dispRowChapters[i] ?? a.chapter_name}</p>
                             </td>
-                            <td className="px-4 py-3 font-medium whitespace-nowrap" style={{color:'#4B5563'}}>{dispRowSubjects[i] ?? a.subject}</td>
+                            <td className="px-4 py-3 font-medium whitespace-nowrap" style={{color:'#CBD5E1'}}>{dispRowSubjects[i] ?? a.subject}</td>
                             <td className="px-4 py-3">
-                              <p className="whitespace-nowrap" style={{color:'#4B5563'}}>{fmt(a.due_date)}</p>
+                              <p className="whitespace-nowrap" style={{color:'#CBD5E1'}}>{fmt(a.due_date)}</p>
                               {dt&&<p className="text-[11px] font-semibold mt-0.5" style={{color:dt.c}}>{dt.t}</p>}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap" style={{color:'#6B7280'}}>{a.submitted_at?fmt(a.submitted_at):'–'}</td>
-                            <td className="px-4 py-3 font-bold whitespace-nowrap" style={{color:'#111827'}}>
-                              {a.marks_obtained!=null?<>{a.marks_obtained}<span style={{color:'#9CA3AF',fontWeight:400}}> /{a.total_marks||'–'}</span></>:'–'}
+                            <td className="px-4 py-3 whitespace-nowrap" style={{color:'#94A3B8'}}>{a.submitted_at?fmt(a.submitted_at):'–'}</td>
+                            <td className="px-4 py-3 font-bold whitespace-nowrap" style={{color:'#F8FAFC'}}>
+                              {a.marks_obtained!=null?<>{a.marks_obtained}<span style={{color:'#64748B',fontWeight:400}}> /{a.total_marks||'–'}</span></>:'–'}
                             </td>
                             <td className="px-4 py-3"><Badge status={a.status}/></td>
                             <td className="px-4 py-3" onClick={e=>e.stopPropagation()}>
-                              <button onClick={()=>setDrawer(a)} className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors hover:border-orange-400 hover:text-orange-600" style={{color:'#374151',borderColor:'#D1D5DB'}}>View</button>
+                              <button onClick={()=>setDrawer(a)} className="text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors hover:border-orange-400 hover:text-orange-600" style={{color:'#E2E8F0',borderColor:'rgba(255,255,255,0.1)'}}>View</button>
                             </td>
                           </tr>
                         );
@@ -284,7 +284,7 @@ export default function AssignmentsPage() {
                     </tbody>
                   </table>
                 </div>
-                <div className="px-4 py-2.5 border-t text-xs" style={{borderColor:'#F3F4F6',color:'#9CA3AF'}}>
+                <div className="px-4 py-2.5 border-t text-xs" style={{borderColor:'rgba(255,255,255,0.05)',color:'#64748B'}}>
                   Showing {rows.length} of {analytics.total} assignments
                 </div>
               </div>
@@ -297,30 +297,30 @@ export default function AssignmentsPage() {
       {drawer&&(
         <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-20 md:pt-24" onClick={()=>setDrawer(null)}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-[100]"/>
-          <div className="relative bg-white rounded-2xl shadow-2xl flex flex-col w-full overflow-hidden z-[110]"
+          <div className="relative bg-slate-800 border border-white/10 rounded-2xl shadow-2xl flex flex-col w-full overflow-hidden z-[110]"
             style={{maxWidth:'820px', maxHeight:'85vh'}}
             onClick={e=>e.stopPropagation()}>
 
             {/* ── MODAL HEADER ── */}
-            <div className="shrink-0 px-6 pt-7 pb-6 border-b sticky top-0 z-20" style={{background:'#F9FAFB',borderColor:'#E5E7EB'}}>
+            <div className="shrink-0 px-6 pt-7 pb-6 border-b sticky top-0 z-20" style={{background:'rgba(255,255,255,0.05)',borderColor:'rgba(255,255,255,0.1)'}}>
               <div className="flex items-start justify-between gap-4">
                 {/* Left: title block */}
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-3xl font-black break-words leading-tight" style={{color:'#111827'}}>{dD[0] ?? drawer.assignment_title}</h2>
+                  <h2 className="text-3xl font-black break-words leading-tight" style={{color:'#F8FAFC'}}>{dD[0] ?? drawer.assignment_title}</h2>
                   {drawer.chapter_name&&(
-                    <p className="text-sm mt-1.5 flex items-center gap-1.5" style={{color:'#6B7280'}}>
+                    <p className="text-sm mt-1.5 flex items-center gap-1.5" style={{color:'#94A3B8'}}>
                       <span>📖</span><span className="font-medium">{dD[1] ?? drawer.chapter_name}</span>
                     </p>
                   )}
                   <div className="flex flex-wrap gap-2.5 mt-4">
-                    <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{background:'#FFF7ED',color:'#EA580C'}}>{dD[2] ?? drawer.subject}</span>
+                    <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{background:'rgba(234,88,12,0.15)',color:'#EA580C'}}>{dD[2] ?? drawer.subject}</span>
                     <Badge status={drawer.status}/>
                   </div>
                 </div>
                 {/* Right: close */}
                 <button onClick={()=>setDrawer(null)}
-                  className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-2xl hover:bg-gray-200 transition-colors mt-0.5"
-                  style={{color:'#6B7280'}}>×</button>
+                  className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-2xl hover:bg-white/10 transition-colors mt-0.5"
+                  style={{color:'#94A3B8'}}>×</button>
               </div>
             </div>
 
@@ -330,9 +330,9 @@ export default function AssignmentsPage() {
 
                 {/* SECTION 1 — Description */}
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#9CA3AF'}}>Description</p>
-                  <div className="rounded-xl p-4" style={{background:'#F9FAFB',border:'1px solid #E5E7EB'}}>
-                    <p className="text-sm leading-relaxed" style={{color:drawer.assignment_text?'#374151':'#9CA3AF',fontStyle:drawer.assignment_text?'normal':'italic'}}>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#64748B'}}>Description</p>
+                  <div className="rounded-xl p-4" style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)'}}>
+                    <p className="text-sm leading-relaxed" style={{color:drawer.assignment_text?'#E2E8F0':'#64748B',fontStyle:drawer.assignment_text?'normal':'italic'}}>
                       {drawer.assignment_text ? (dD[3] || drawer.assignment_text) : 'No description provided.'}
                     </p>
                   </div>
@@ -340,7 +340,7 @@ export default function AssignmentsPage() {
 
                 {/* SECTION 2 — Info Grid (2 cols × 3 rows) */}
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-2.5" style={{color:'#9CA3AF'}}>Assignment Information</p>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-2.5" style={{color:'#64748B'}}>Assignment Information</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
                       {icon:'👤',l:'Teacher',         v:dD[6] || drawer.teacher_name||'–'},
@@ -350,9 +350,9 @@ export default function AssignmentsPage() {
                       {icon:'📊',l:'Total Marks',      v:drawer.total_marks!=null?`${drawer.total_marks}`:'–'},
                       {icon:'📋',l:'Chapter',          v:dD[1] || drawer.chapter_name||'–'},
                     ].map(({icon,l,v})=>(
-                      <div key={l} className="rounded-xl p-3.5" style={{background:'#fff',border:'1px solid #E5E7EB'}}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1" style={{color:'#9CA3AF'}}><span>{icon}</span>{l}</p>
-                        <p className="text-sm font-bold" style={{color:'#111827'}}>{v}</p>
+                      <div key={l} className="rounded-xl p-3.5" style={{background:'rgba(255,255,255,0.05)',border:'1px solid #E5E7EB'}}>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1" style={{color:'#64748B'}}><span>{icon}</span>{l}</p>
+                        <p className="text-sm font-bold" style={{color:'#F8FAFC'}}>{v}</p>
                       </div>
                     ))}
                   </div>
@@ -378,7 +378,7 @@ export default function AssignmentsPage() {
 
                 {/* SECTION 4 — Teacher Remarks */}
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#9CA3AF'}}>Teacher Remarks</p>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#64748B'}}>Teacher Remarks</p>
                   {drawer.teacher_remarks?(
                     <div className="rounded-xl p-4" style={{background:'#EFF6FF',border:'1px solid #BFDBFE'}}>
                       <p className="text-[10px] font-bold uppercase mb-1.5 flex items-center gap-1.5" style={{color:'#1D4ED8'}}>
@@ -387,13 +387,13 @@ export default function AssignmentsPage() {
                       <p className="text-sm leading-relaxed" style={{color:'#1E40AF'}}>"{dD[4] || drawer.teacher_remarks}"</p>
                     </div>
                   ):(
-                    <p className="text-sm italic py-1" style={{color:'#9CA3AF'}}>No remarks added yet.</p>
+                    <p className="text-sm italic py-1" style={{color:'#64748B'}}>No remarks added yet.</p>
                   )}
                 </div>
 
                 {/* SECTION 5 — Student Submission */}
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#9CA3AF'}}>Student Submission</p>
+                  <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#64748B'}}>Student Submission</p>
                   {drawer.submission_text?(
                     <div className="space-y-2.5">
                       <div className="rounded-xl p-4" style={{background:'#F0FDF4',border:'1px solid #BBF7D0'}}>
@@ -404,20 +404,20 @@ export default function AssignmentsPage() {
                         )}
                       </div>
                       {drawer.file_path&&(
-                        <div className="rounded-xl p-3 flex items-center gap-3" style={{background:'#F9FAFB',border:'1px solid #E5E7EB'}}>
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0" style={{background:'#F3F4F6'}}>📎</div>
+                        <div className="rounded-xl p-3 flex items-center gap-3" style={{background:'rgba(255,255,255,0.05)',border:'1px solid #E5E7EB'}}>
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0" style={{background:'rgba(255,255,255,0.08)'}}>📎</div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold" style={{color:'#374151'}}>Attachment</p>
-                            <p className="text-xs truncate" style={{color:'#6B7280'}}>{drawer.file_path}</p>
+                            <p className="text-xs font-bold" style={{color:'#E2E8F0'}}>Attachment</p>
+                            <p className="text-xs truncate" style={{color:'#94A3B8'}}>{drawer.file_path}</p>
                           </div>
                         </div>
                       )}
                     </div>
                   ):(
-                    <div className="rounded-xl p-5 text-center" style={{background:'#F9FAFB',border:'1px dashed #E5E7EB'}}>
+                    <div className="rounded-xl p-5 text-center" style={{background:'rgba(255,255,255,0.05)',border:'1px dashed #E5E7EB'}}>
                       <p className="text-2xl mb-1">📭</p>
-                      <p className="text-sm font-semibold" style={{color:'#6B7280'}}>No submission uploaded yet.</p>
-                      <p className="text-xs mt-0.5" style={{color:'#9CA3AF'}}>Click the button below to submit.</p>
+                      <p className="text-sm font-semibold" style={{color:'#94A3B8'}}>No submission uploaded yet.</p>
+                      <p className="text-xs mt-0.5" style={{color:'#64748B'}}>Click the button below to submit.</p>
                     </div>
                   )}
                 </div>
@@ -426,7 +426,7 @@ export default function AssignmentsPage() {
             </div>
 
             {/* ── STICKY FOOTER ── */}
-            <div className="shrink-0 px-6 py-4 border-t flex flex-wrap gap-3" style={{borderColor:'#E5E7EB',background:'#FAFAFA'}}>
+            <div className="shrink-0 px-6 py-4 border-t flex flex-wrap gap-3" style={{borderColor:'rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.05)'}}>
               {['Upcoming','Ongoing','Overdue'].includes(drawer.status)?(
                 <button onClick={()=>{setTarget(drawer);openModal(drawer);setDrawer(null);}}
                   className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity"
@@ -434,7 +434,7 @@ export default function AssignmentsPage() {
               ):drawer.status==='Submitted'?(
                 <button onClick={()=>{setTarget(drawer);openModal(drawer);setDrawer(null);}}
                   className="flex-1 py-2.5 rounded-xl font-bold text-sm border hover:border-orange-400 hover:text-orange-600 transition-colors"
-                  style={{color:'#4B5563',borderColor:'#D1D5DB',background:'#fff'}}>Update Submission</button>
+                  style={{color:'#CBD5E1',borderColor:'rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.05)'}}>Update Submission</button>
               ):drawer.status==='Graded'?(
                 <div className="flex-1 rounded-xl py-2.5 text-center" style={{background:'#F0FDF4',border:'1px solid #BBF7D0'}}>
                   <p className="text-sm font-bold" style={{color:'#15803D'}}>✅ Graded — {drawer.marks_obtained} marks received</p>
@@ -451,8 +451,8 @@ export default function AssignmentsPage() {
                 💬 Ask Teacher
               </button>
               <button onClick={()=>setDrawer(null)}
-                className="px-5 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:bg-gray-50"
-                style={{color:'#6B7280',borderColor:'#E5E7EB'}}>Close</button>
+                className="px-5 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:bg-white/10"
+                style={{color:'#94A3B8',borderColor:'rgba(255,255,255,0.1)'}}>Close</button>
             </div>
           </div>
         </div>
@@ -464,35 +464,35 @@ export default function AssignmentsPage() {
       {modal&&(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-[100]"/>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden z-[110]">
-            <div className="p-5 border-b flex justify-between items-center" style={{borderColor:'#E5E7EB',background:'#F9FAFB'}}>
-              <h3 className="font-black text-lg" style={{color:'#111827'}}>Submit Assignment</h3>
-              <button onClick={()=>{setModal(false);setText('');}} className="text-2xl leading-none hover:opacity-60" style={{color:'#9CA3AF'}}>×</button>
+          <div className="relative bg-slate-800 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden z-[110]">
+            <div className="p-5 border-b flex justify-between items-center" style={{borderColor:'rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.05)'}}>
+              <h3 className="font-black text-lg" style={{color:'#F8FAFC'}}>Submit Assignment</h3>
+              <button onClick={()=>{setModal(false);setText('');}} className="text-2xl leading-none hover:opacity-60" style={{color:'#64748B'}}>×</button>
             </div>
             <div className="p-5 space-y-4">
               {/* Assignment selector */}
               {!target?(
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#374151'}}>Select Assignment</label>
+                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#E2E8F0'}}>Select Assignment</label>
                   <select onChange={e=>{const f=assignments.find(a=>a.assignment_id===Number(e.target.value));setTarget(f||null);}}
                     className="w-full border rounded-xl px-3 py-2.5 text-sm font-medium outline-none"
-                    style={{color:'#111827',borderColor:'#D1D5DB',background:'#FFFFFF'}}>
-                    <option value="" style={{color:'#9CA3AF'}}>— Choose an assignment —</option>
+                    style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.05)'}}>
+                    <option value="" style={{color:'#64748B'}}>— Choose an assignment —</option>
                     {assignments.filter(a=>['Upcoming','Ongoing','Overdue'].includes(a.status)).map(a=>(
-                      <option key={a.assignment_id} value={a.assignment_id} style={{color:'#111827'}}>
+                      <option key={a.assignment_id} value={a.assignment_id} style={{color:'#F8FAFC'}}>
                         {a.assignment_title} · {a.subject} · Due {fmt(a.due_date)}
                       </option>
                     ))}
                   </select>
                 </div>
               ):(
-                <div className="rounded-xl p-4" style={{background:'#FFF7ED',border:'1px solid #FED7AA'}}>
+                <div className="rounded-xl p-4" style={{background:'rgba(234,88,12,0.1)',border:'1px solid rgba(234,88,12,0.25)'}}>
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider" style={{color:'#EA580C'}}>Submitting for</p>
-                      <p className="font-bold mt-0.5" style={{color:'#111827'}}>{dT[0] ?? target.assignment_title}</p>
-                      <p className="text-xs mt-0.5" style={{color:'#6B7280'}}>{dT[1] ?? target.subject} · Due {fmt(target.due_date)}</p>
-                      {target.teacher_name&&<p className="text-xs mt-0.5" style={{color:'#6B7280'}}>Teacher: {dT[2] ?? target.teacher_name}</p>}
+                      <p className="font-bold mt-0.5" style={{color:'#F8FAFC'}}>{dT[0] ?? target.assignment_title}</p>
+                      <p className="text-xs mt-0.5" style={{color:'#94A3B8'}}>{dT[1] ?? target.subject} · Due {fmt(target.due_date)}</p>
+                      {target.teacher_name&&<p className="text-xs mt-0.5" style={{color:'#94A3B8'}}>Teacher: {dT[2] ?? target.teacher_name}</p>}
                     </div>
                     <button onClick={()=>setTarget(null)} className="text-xs font-bold" style={{color:'#EA580C'}}>Change</button>
                   </div>
@@ -500,23 +500,23 @@ export default function AssignmentsPage() {
               )}
 
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#374151'}}>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#E2E8F0'}}>
                   Submission Text <span style={{color:'#DC2626'}}>*</span>
                 </label>
                 <textarea rows={5} value={text} onChange={e=>setText(e.target.value)}
                   placeholder="Write your answer or describe your submission..."
-                  className="w-full border rounded-xl px-4 py-3 text-sm outline-none resize-none"
-                  style={{color:'#111827',borderColor:'#D1D5DB',lineHeight:'1.6'}}
+                  className="w-full border rounded-xl px-4 py-3 text-sm outline-none resize-none bg-slate-700 placeholder:text-slate-500"
+                  style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',lineHeight:'1.6'}}
                   onFocus={e=>e.target.style.borderColor='#EA580C'}
-                  onBlur={e=>e.target.style.borderColor='#D1D5DB'}/>
+                  onBlur={e=>e.target.style.borderColor='rgba(255,255,255,0.1)'}/>
               </div>
 
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#374151'}}>Attachment (optional)</label>
-                <div className="border-2 border-dashed rounded-xl p-4 text-center" style={{borderColor:'#E5E7EB'}}>
-                  <p className="text-sm" style={{color:'#9CA3AF'}}>📎 Drag & drop or paste a file link</p>
-                  <input type="text" placeholder="https://drive.google.com/..." className="mt-2 w-full text-sm border rounded-lg px-3 py-2 outline-none"
-                    style={{color:'#111827',borderColor:'#E5E7EB'}}/>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#E2E8F0'}}>Attachment (optional)</label>
+                <div className="border-2 border-dashed rounded-xl p-4 text-center" style={{borderColor:'rgba(255,255,255,0.1)'}}>
+                  <p className="text-sm" style={{color:'#64748B'}}>📎 Drag & drop or paste a file link</p>
+                  <input type="text" placeholder="https://drive.google.com/..." className="mt-2 w-full text-sm border rounded-lg px-3 py-2 outline-none bg-slate-700 placeholder:text-slate-500"
+                    style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)'}}/>
                 </div>
               </div>
 
@@ -533,16 +533,16 @@ export default function AssignmentsPage() {
       {/* AI Insights Modal */}
       {aiModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.45)'}}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style={{maxHeight:'85vh'}}>
+          <div className="bg-slate-800 border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style={{maxHeight:'85vh'}}>
             {/* Modal header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'#E5E7EB'}}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:'rgba(255,255,255,0.1)'}}>
               <div className="flex items-center gap-2">
                 <span className="text-lg">✨</span>
-                <h2 className="text-base font-bold" style={{color:'#111827'}}>AI Assignment Insights</h2>
+                <h2 className="text-base font-bold" style={{color:'#F8FAFC'}}>AI Assignment Insights</h2>
               </div>
               <button
                 onClick={() => setAiModal(false)}
-                className="text-gray-400 hover:text-gray-700 transition-colors text-xl font-bold leading-none"
+                className="text-slate-400 hover:text-white transition-colors text-xl font-bold leading-none"
                 aria-label="Close"
               >
                 ×
@@ -559,12 +559,12 @@ export default function AssignmentsPage() {
             </div>
 
             {/* Modal footer */}
-            <div className="px-5 py-3 border-t flex justify-end" style={{borderColor:'#E5E7EB'}}>
+            <div className="px-5 py-3 border-t flex justify-end" style={{borderColor:'rgba(255,255,255,0.1)'}}>
               <button
                 onClick={() => setAiModal(false)}
                 className="px-5 py-2 rounded-xl text-sm font-bold border transition-colors"
-                style={{color:'#374151', borderColor:'#D1D5DB'}}
-                onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                style={{color:'#E2E8F0', borderColor:'rgba(255,255,255,0.1)'}}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 Close

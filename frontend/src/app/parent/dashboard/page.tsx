@@ -32,14 +32,14 @@ function StatCard({
   sub?: string; href?: string; iconBg: string;
 }) {
   const card = (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 transition-all ${href ? 'hover:border-orange-200 hover:shadow-md cursor-pointer' : ''}`}>
+    <div className={`bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 transition-all ${href ? 'hover:border-orange-500/40 hover:bg-white/10 cursor-pointer' : ''}`}>
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 ${iconBg}`}>{icon}</div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">{label}</p>
-        <p className="text-xl font-black text-gray-900 mt-0.5 leading-tight">{value}</p>
-        {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+        <p className="text-[11px] text-slate-300 font-semibold uppercase tracking-wide">{label}</p>
+        <p className="text-xl font-black text-white mt-0.5 leading-tight">{value}</p>
+        {sub && <p className="text-[11px] text-slate-300 mt-0.5">{sub}</p>}
       </div>
-      {href && <span className="text-gray-300 text-base shrink-0">›</span>}
+      {href && <span className="text-slate-500 text-base shrink-0">›</span>}
     </div>
   );
   return href ? <Link href={href}>{card}</Link> : card;
@@ -51,11 +51,11 @@ function SectionCard({ title, children, action }: {
   action?: { label: string; href: string };
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-gray-900 text-sm">{title}</h3>
+        <h3 className="font-bold text-white text-sm">{title}</h3>
         {action && (
-          <Link href={action.href} className="text-[11px] text-orange-500 font-bold hover:underline shrink-0">
+          <Link href={action.href} className="text-[11px] text-orange-400 font-bold hover:underline shrink-0">
             {action.label}
           </Link>
         )}
@@ -69,7 +69,7 @@ function EmptyState({ icon, text }: { icon: string; text: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
       <span className="text-3xl mb-2">{icon}</span>
-      <p className="text-sm text-gray-400">{text}</p>
+      <p className="text-sm text-slate-400">{text}</p>
     </div>
   );
 }
@@ -202,7 +202,7 @@ export default function ParentDashboard() {
   const actionRequiredCount = data?.action_required_count ?? (alerts.filter((a: any) => a.priority === 'HIGH').length);
 
   return (
-    <div className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-800 font-sans">
+    <div className="min-h-full flex flex-col text-slate-200 font-sans">
       <TopBar
         studentId={studentId} setStudentId={setStudentId}
         parentId={parentId}
@@ -218,22 +218,22 @@ export default function ParentDashboard() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500" />
             </div>
           ) : error ? (
-            <div className="bg-red-50 text-red-600 p-6 rounded-xl text-center border border-red-100">{error}</div>
+            <div className="bg-red-500/10 text-red-400 p-6 rounded-xl text-center border border-red-500/20">{error}</div>
           ) : (
             <>
               {/* ── Greeting ── */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
+              <div className="bg-white/5 rounded-2xl border border-white/10 p-4 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-black text-base border-2 border-orange-100 shrink-0">
                   PS
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400">{timeGreeting()},</p>
-                  <p className="text-lg font-black text-gray-900 leading-tight">Priya Sharma 👋</p>
+                  <p className="text-xs text-slate-400">{timeGreeting()},</p>
+                  <p className="text-lg font-black text-white leading-tight">Priya Sharma 👋</p>
                   {studentName && (
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
-                      Viewing <span className="font-semibold text-gray-700">{studentName}</span> Dashboard
+                    <p className="text-xs text-slate-400 mt-0.5 truncate">
+                      Viewing <span className="font-semibold text-slate-300">{studentName}</span> Dashboard
                       {className && (
-                        <span className="text-gray-400">
+                        <span className="text-slate-500">
                           {' '}· Class {className}{section ? ` – ${section}` : ''}
                         </span>
                       )}
@@ -292,19 +292,19 @@ export default function ParentDashboard() {
                       {alerts.slice(0, 5).map((a: any, i: number) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all"
+                          className="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-white/10 border border-transparent hover:border-white/10 transition-all"
                         >
                           <AlertPill type={a.type} priority={a.priority} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate">
+                            <p className="text-sm font-medium text-white truncate">
                               {dispAlertMsgs[i] ?? a.message}
                             </p>
                             {a.subject && (
-                              <p className="text-[11px] text-gray-400 truncate">{a.subject}</p>
+                              <p className="text-[11px] text-slate-400 truncate">{a.subject}</p>
                             )}
                           </div>
                           {a.due && (
-                            <span className="text-[11px] text-gray-400 shrink-0">{a.due}</span>
+                            <span className="text-[11px] text-slate-400 shrink-0">{a.due}</span>
                           )}
                         </div>
                       ))}
@@ -326,19 +326,19 @@ export default function ParentDashboard() {
                         return (
                           <div
                             key={i}
-                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all"
+                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/10 border border-transparent hover:border-white/10 transition-all"
                           >
-                            <div className="w-10 h-10 rounded-xl bg-orange-50 flex flex-col items-center justify-center shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex flex-col items-center justify-center shrink-0">
                               <span className="text-[8px] font-black text-orange-400">{mon}</span>
-                              <span className="text-sm font-black text-orange-600 leading-none">{day}</span>
+                              <span className="text-sm font-black text-orange-500 leading-none">{day}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">
+                              <p className="text-sm font-semibold text-white truncate">
                                 {dispDeadlineTitles[i] ?? d.title}
                               </p>
-                              <p className="text-[11px] text-gray-400 truncate">{d.type}</p>
+                              <p className="text-[11px] text-slate-400 truncate">{d.type}</p>
                             </div>
-                            <span className={`text-[11px] font-bold shrink-0 ${urgent ? 'text-red-500' : warn ? 'text-orange-500' : 'text-gray-400'}`}>
+                            <span className={`text-[11px] font-bold shrink-0 ${urgent ? 'text-red-500' : warn ? 'text-orange-500' : 'text-slate-400'}`}>
                               {d.days_left === 0 ? 'Today' : `${d.days_left}d`}
                             </span>
                           </div>
@@ -381,21 +381,21 @@ export default function ParentDashboard() {
                         <div className="space-y-2">
                           {subjectPerf.slice(0, 5).map((s: any, i: number) => (
                             <div key={i} className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500 w-24 shrink-0 truncate">{s.subject}</span>
-                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <span className="text-xs text-slate-400 w-24 shrink-0 truncate">{s.subject}</span>
+                              <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${BAR_COLORS[i % BAR_COLORS.length]}`}
                                   style={{ width: `${Math.min(100, Math.max(0, s.score))}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-bold text-gray-600 w-9 text-right shrink-0">
+                              <span className="text-xs font-bold text-slate-300 w-9 text-right shrink-0">
                                 {Math.round(s.score)}%
                               </span>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-400 text-center py-2">
+                        <p className="text-xs text-slate-400 text-center py-2">
                           Subject breakdown unavailable.
                         </p>
                       )}
@@ -409,13 +409,13 @@ export default function ParentDashboard() {
                   ) : (
                     <div className="space-y-2">
                       {recs.slice(0, 4).map((r: any, i: number) => (
-                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                           <span className="text-lg shrink-0 mt-0.5">{recIcon(r.type)}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800">
+                            <p className="text-sm font-semibold text-white">
                               {dispRecMsgs[i] ?? r.message}
                             </p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">
+                            <p className="text-[11px] text-slate-400 mt-0.5">
                               {dispRecActions[i] ?? r.action_text}
                             </p>
                           </div>
@@ -453,13 +453,13 @@ export default function ParentDashboard() {
                         <Link
                           key={i}
                           href={n.link || '#'}
-                          className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-gray-50 border border-gray-100 hover:border-orange-200 hover:bg-orange-50 transition-all"
+                          className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-orange-500/40 hover:bg-orange-500/10 transition-all"
                         >
-                          <div className={`w-9 h-9 rounded-full ${ns.bg} flex items-center justify-center text-lg shrink-0`}>
+                          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-lg shrink-0">
                             {ns.icon}
                           </div>
-                          <p className="text-[11px] text-gray-700 font-medium leading-tight line-clamp-2">{n.title}</p>
-                          <span className="text-[10px] text-gray-400">{fmtDate(n.date)}</span>
+                          <p className="text-[11px] text-slate-300 font-medium leading-tight line-clamp-2">{n.title}</p>
+                          <span className="text-[10px] text-slate-500">{fmtDate(n.date)}</span>
                         </Link>
                       );
                     })}

@@ -42,20 +42,20 @@ function LogoutDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-[210] overflow-hidden">
+      <div className="relative bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm z-[210] overflow-hidden border border-white/10">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-full bg-red-50 flex items-center justify-center text-xl shrink-0">👋</div>
+            <div className="w-11 h-11 rounded-full bg-red-500/20 flex items-center justify-center text-xl shrink-0">👋</div>
             <div>
-              <h3 className="font-black text-gray-900 text-lg leading-tight">Log out?</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Are you sure you want to logout?</p>
+              <h3 className="font-black text-white text-lg leading-tight">Log out?</h3>
+              <p className="text-sm text-slate-400 mt-0.5">Are you sure you want to logout?</p>
             </div>
           </div>
           <div className="flex gap-3 mt-6">
             <button
               onClick={onCancel}
-              className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-              style={{ borderColor: '#E5E7EB' }}
+              className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-slate-300 hover:bg-white/10 transition-colors"
+              style={{ borderColor: 'rgba(255,255,255,0.15)' }}
             >
               Cancel
             </button>
@@ -212,11 +212,11 @@ export default function TopBar({
 
   return (
     <>
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 border-b border-gray-200 sticky top-0 z-20">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/80 backdrop-blur-md p-4 border-b border-white/10 sticky top-0 z-20">
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button
             onClick={() => window.dispatchEvent(new Event('sgsSidebarToggle'))}
-            className="md:hidden text-gray-500 hover:text-gray-700 transition-colors shrink-0"
+            className="md:hidden text-slate-400 hover:text-white transition-colors shrink-0"
             aria-label="Open menu"
           >
             <Bars3Icon className="w-6 h-6" />
@@ -240,7 +240,7 @@ export default function TopBar({
           <div ref={bellRef} className="relative">
             <button
               onClick={() => { setShowNotifications(p => !p); setShowProfile(false); }}
-              className="relative text-gray-500 hover:text-gray-700 transition-colors"
+              className="relative text-slate-400 hover:text-white transition-colors"
               aria-label="Notifications"
             >
               <BellIcon className="w-6 h-6" />
@@ -252,9 +252,9 @@ export default function TopBar({
             </button>
 
             {showNotifications && (
-              <div className="absolute top-10 right-0 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
-                <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="font-bold text-gray-800 text-sm">
+              <div className="absolute top-10 right-0 w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
+                <div className="p-4 bg-white/5 border-b border-white/10 flex justify-between items-center">
+                  <h3 className="font-bold text-white text-sm">
                     Notifications {unreadCount > 0 && <span className="text-orange-500">({unreadCount} new)</span>}
                   </h3>
                   {unreadCount > 0 && (
@@ -271,8 +271,8 @@ export default function TopBar({
                   {unreadNotifications.length === 0 ? (
                     <div className="p-6 text-center">
                       <p className="text-2xl mb-2">✅</p>
-                      <p className="text-sm text-gray-500 font-medium">You&apos;re all caught up!</p>
-                      <p className="text-xs text-gray-400 mt-1">No new notifications.</p>
+                      <p className="text-sm text-slate-400 font-medium">You&apos;re all caught up!</p>
+                      <p className="text-xs text-slate-500 mt-1">No new notifications.</p>
                     </div>
                   ) : (
                     unreadNotifications.map((n: any) => (
@@ -280,16 +280,16 @@ export default function TopBar({
                         key={n.id}
                         href={n.link || '#'}
                         onClick={() => { markOneRead(n.id); setShowNotifications(false); }}
-                        className="p-4 border-b border-gray-50 hover:bg-orange-50 transition-colors flex gap-3 items-start cursor-pointer block bg-orange-50/30"
+                        className="p-4 border-b border-white/5 hover:bg-orange-500/10 transition-colors flex gap-3 items-start cursor-pointer block bg-orange-500/5"
                       >
                         <span className="text-xl shrink-0">{notifIcon(n.type)}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm text-gray-800 font-semibold truncate flex-1">{n.title}</p>
+                            <p className="text-sm text-white font-semibold truncate flex-1">{n.title}</p>
                             <span className="shrink-0 w-2 h-2 rounded-full bg-orange-500" />
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                          <p className="text-[10px] text-gray-400 mt-1 uppercase font-semibold tracking-wider">
+                          <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{n.message}</p>
+                          <p className="text-[10px] text-slate-500 mt-1 uppercase font-semibold tracking-wider">
                             {n.date ? new Date(n.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Just now'}
                           </p>
                         </div>
@@ -298,11 +298,11 @@ export default function TopBar({
                   )}
                 </div>
 
-                <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
+                <div className="p-3 bg-white/5 border-t border-white/10 text-center">
                   <Link
                     href="/parent/communication"
                     onClick={() => setShowNotifications(false)}
-                    className="text-xs font-bold text-gray-500 hover:text-orange-600 uppercase tracking-wider"
+                    className="text-xs font-bold text-slate-400 hover:text-orange-400 uppercase tracking-wider"
                   >
                     View All Communications →
                   </Link>
@@ -312,7 +312,7 @@ export default function TopBar({
           </div>
 
           {/* ── Profile ── */}
-          <div ref={profileRef} className="relative flex items-center gap-3 border-l pl-6 border-gray-200">
+          <div ref={profileRef} className="relative flex items-center gap-3 border-l pl-6 border-white/10">
             <button
               onClick={() => { setShowProfile(p => !p); setShowNotifications(false); }}
               className="flex items-center gap-3 focus:outline-none"
@@ -322,24 +322,24 @@ export default function TopBar({
                 PS
               </div>
               <div className="text-sm hidden sm:block text-left">
-                <p className="text-gray-500 text-xs">Welcome,</p>
-                <p className="font-bold text-gray-800">Priya Sharma</p>
+                <p className="text-slate-400 text-xs">Welcome,</p>
+                <p className="font-bold text-white">Priya Sharma</p>
               </div>
             </button>
 
             {showProfile && (
-              <div className="absolute top-12 right-0 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 bg-gray-50">
-                  <p className="font-bold text-gray-900 text-sm">Priya Sharma</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Parent Account</p>
+              <div className="absolute top-12 right-0 w-52 bg-slate-800 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
+                <div className="p-4 border-b border-white/10 bg-white/5">
+                  <p className="font-bold text-white text-sm">Priya Sharma</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Parent Account</p>
                 </div>
                 <div className="py-1">
                   <Link
                     href="/parent/dashboard"
                     onClick={() => setShowProfile(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition-colors"
                   >
-                    <UserCircleIcon className="w-4 h-4 text-gray-400" />
+                    <UserCircleIcon className="w-4 h-4 text-slate-400" />
                     Dashboard
                   </Link>
                   <button

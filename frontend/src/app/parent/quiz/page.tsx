@@ -41,7 +41,7 @@ const CircularProgress = ({ pct, colorHex }: { pct: number; colorHex: string }) 
   return (
     <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
       <svg className="transform -rotate-90" width={size} height={size}>
-        <circle cx={size/2} cy={size/2} r={radius} stroke="#F3F4F6" strokeWidth={stroke} fill="none" />
+        <circle cx={size/2} cy={size/2} r={radius} stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} fill="none" />
         <circle cx={size/2} cy={size/2} r={radius} stroke={colorHex} strokeWidth={stroke} fill="none" 
           strokeDasharray={circum} strokeDashoffset={offset} strokeLinecap="round" />
       </svg>
@@ -150,7 +150,7 @@ export default function QuizPerformancePage() {
   };
 
   return (
-    <div className="min-h-full flex flex-col font-sans bg-[#F9FAFB]">
+    <div className="min-h-full flex flex-col font-sans">
       <TopBar studentId={studentId} setStudentId={setStudentId} parentId={parentId} language={language} setLanguage={setLanguage} isLoading={isLoading} />
 
       <div className="flex-1 p-4 md:p-6 lg:p-8">
@@ -159,8 +159,8 @@ export default function QuizPerformancePage() {
           {/* ── HEADER ── */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
             <div>
-              <h1 className="text-3xl font-black text-gray-900 leading-tight">Quiz Performance</h1>
-              <p className="text-sm font-medium text-gray-500 mt-1">Overview of quiz results across all subjects.</p>
+              <h1 className="text-3xl font-black text-white leading-tight">Quiz Performance</h1>
+              <p className="text-sm font-medium text-slate-400 mt-1">Overview of quiz results across all subjects.</p>
             </div>
           </div>
 
@@ -178,30 +178,30 @@ export default function QuizPerformancePage() {
                   { l: 'Lowest Score', v: `${lowest}%`, s: 'Needs focus' },
                   { l: 'Quizzes Attempted', v: quizzes.length.toString(), s: 'Total count' },
                 ].map(c => (
-                  <div key={c.l} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{c.l}</p>
-                    <p className="text-3xl font-black text-gray-900">{c.v}</p>
-                    <p className="text-xs font-semibold text-gray-400 mt-1">{c.s}</p>
+                  <div key={c.l} className="bg-white/5 rounded-2xl border border-white/10 p-5">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{c.l}</p>
+                    <p className="text-3xl font-black text-white">{c.v}</p>
+                    <p className="text-xs font-semibold text-slate-400 mt-1">{c.s}</p>
                   </div>
                 ))}
               </div>
 
               {/* ── FILTER BAR ── */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 flex flex-wrap items-center gap-3">
+              <div className="bg-white/5 rounded-xl border border-white/10 p-3 flex flex-wrap items-center gap-3">
                 <select value={subj} onChange={e => setSubj(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 text-gray-900 text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[140px]">
+                  className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[140px]">
                   {subjects.map(s => <option key={s} value={s}>{s === 'All' ? 'All Subjects' : s}</option>)}
                 </select>
                 <div className="flex-1 relative min-w-[200px]">
-                  <span className="absolute left-3 top-2.5 text-sm text-gray-400">🔍</span>
-                  <input value={search} onChange={e => setSearch(e.target.value)} 
+                  <span className="absolute left-3 top-2.5 text-sm text-slate-400">🔍</span>
+                  <input value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="Search quizzes..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm font-medium text-gray-900 outline-none" />
+                    className="w-full bg-slate-800 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm font-medium text-white outline-none placeholder:text-slate-500" />
                 </div>
               </div>
 
               {/* ── TABS ── */}
-              <div className="flex border-b border-gray-200 overflow-x-auto no-scrollbar">
+              <div className="flex border-b border-white/10 overflow-x-auto no-scrollbar">
                 {TABS.map(t => {
                   const count = t === 'All' ? quizzes.length : quizzes.filter(q => q.status === t).length;
                   const active = tab === t;
@@ -210,11 +210,11 @@ export default function QuizPerformancePage() {
                       className="px-5 py-3 text-sm font-bold whitespace-nowrap border-b-2 -mb-px flex items-center gap-2 transition-colors"
                       style={{
                         borderColor: active ? '#EA580C' : 'transparent',
-                        color: active ? '#EA580C' : '#6B7280'
+                        color: active ? '#EA580C' : '#94A3B8'
                       }}>
                       {t}
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
-                        style={{ background: active ? '#FFF7ED' : '#F3F4F6', color: active ? '#EA580C' : '#9CA3AF' }}>
+                        style={{ background: active ? 'rgba(234,88,12,0.15)' : 'rgba(255,255,255,0.08)', color: active ? '#EA580C' : '#94A3B8' }}>
                         {count}
                       </span>
                     </button>
@@ -224,10 +224,10 @@ export default function QuizPerformancePage() {
 
               {/* ── QUIZ GRID ── */}
               {filtered.length === 0 ? (
-                <div className="py-20 text-center bg-white rounded-2xl border border-gray-200 border-dashed">
+                <div className="py-20 text-center bg-white/5 rounded-2xl border border-white/10 border-dashed">
                   <p className="text-4xl mb-3">📭</p>
-                  <p className="text-gray-900 font-bold">No quizzes found.</p>
-                  <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters.</p>
+                  <p className="text-white font-bold">No quizzes found.</p>
+                  <p className="text-slate-400 text-sm mt-1">Try adjusting your search or filters.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -235,14 +235,14 @@ export default function QuizPerformancePage() {
                     const c = STATUS_COLORS[q.status] || STATUS_COLORS['Average'];
                     return (
                       <div key={q.quiz_id} onClick={() => setModalData(q)}
-                        className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group flex items-start gap-4">
+                        className="bg-white/5 rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-all cursor-pointer group flex items-start gap-4">
                         <CircularProgress pct={q.percentage} colorHex={c.hex} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-black uppercase tracking-wider mb-1" style={{ color: c.hex }}>{dispQuizSubjects[idx] ?? q.subject}</p>
-                          <h3 className="text-base font-black text-gray-900 truncate group-hover:text-orange-600 transition-colors">{dispQuizTitles[idx] ?? q.quiz_title}</h3>
+                          <h3 className="text-base font-black text-white truncate group-hover:text-orange-400 transition-colors">{dispQuizTitles[idx] ?? q.quiz_title}</h3>
                           <div className="flex flex-wrap items-center gap-3 mt-2">
-                            <p className="text-xs font-bold text-gray-400">{fmt(q.quiz_date)}</p>
-                            <p className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                            <p className="text-xs font-bold text-slate-400">{fmt(q.quiz_date)}</p>
+                            <p className="text-xs font-bold text-slate-400 bg-white/10 px-2 py-0.5 rounded-md">
                               {q.score} / {q.total}
                             </p>
                           </div>
@@ -267,21 +267,21 @@ export default function QuizPerformancePage() {
         return (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setModalData(null)}>
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-[100]" />
-            <div className="relative bg-white rounded-3xl shadow-2xl flex flex-col w-full max-w-lg overflow-hidden z-[110]"
+            <div className="relative bg-slate-800 rounded-3xl shadow-2xl flex flex-col w-full max-w-lg overflow-hidden z-[110] border border-white/10"
               onClick={e => e.stopPropagation()}>
-              
+
               <div className="shrink-0 p-6 pb-0 flex justify-between items-start">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-gray-100">📋</div>
-                <button onClick={() => setModalData(null)} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors text-xl font-bold">×</button>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl bg-white/10">📋</div>
+                <button onClick={() => setModalData(null)} className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-white/10 hover:text-white transition-colors text-xl font-bold">×</button>
               </div>
 
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-2xl font-black text-gray-900 leading-tight">{dQM[0] ?? modalData.quiz_title}</h2>
-                <p className="text-sm font-bold text-gray-400 mt-1">{dQM[1] ?? modalData.subject} • Conducted on {fmt(modalData.quiz_date)}</p>
+              <div className="px-6 py-4 border-b border-white/10">
+                <h2 className="text-2xl font-black text-white leading-tight">{dQM[0] ?? modalData.quiz_title}</h2>
+                <p className="text-sm font-bold text-slate-400 mt-1">{dQM[1] ?? modalData.subject} • Conducted on {fmt(modalData.quiz_date)}</p>
               </div>
 
               <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
-                
+
                 {/* Result Block */}
                 <div className="flex items-center gap-5 p-4 rounded-2xl" style={{ background: c.bg, border: `1px solid ${c.border}` }}>
                   <CircularProgress pct={modalData.percentage} colorHex={c.hex} />
@@ -293,31 +293,31 @@ export default function QuizPerformancePage() {
 
                 {/* Details Grid */}
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-3">Quiz Information</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">Quiz Information</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Teacher</p>
-                      <p className="text-sm font-bold text-gray-900">{dQM[2] ?? modalData.teacher_name}</p>
+                    <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Teacher</p>
+                      <p className="text-sm font-bold text-white">{dQM[2] ?? modalData.teacher_name}</p>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Subject</p>
-                      <p className="text-sm font-bold text-gray-900">{dQM[1] ?? modalData.subject}</p>
+                    <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subject</p>
+                      <p className="text-sm font-bold text-white">{dQM[1] ?? modalData.subject}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Remarks & Suggestion */}
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-3">Teacher Insights</p>
-                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">Teacher Insights</p>
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                     <div>
-                      <p className="text-xs font-bold text-gray-400 mb-1">Status Feedback</p>
-                      <p className="text-sm font-bold text-gray-900">{dQM[3] ?? modalData.suggestion}</p>
+                      <p className="text-xs font-bold text-slate-400 mb-1">Status Feedback</p>
+                      <p className="text-sm font-bold text-white">{dQM[3] ?? modalData.suggestion}</p>
                     </div>
                     {modalData.remarks && modalData.remarks !== modalData.suggestion && (
-                      <div className="pt-3 border-t border-gray-100">
-                        <p className="text-xs font-bold text-gray-400 mb-1">Specific Remarks</p>
-                        <p className="text-sm font-medium text-gray-700 italic">"{dQM[4] ?? modalData.remarks}"</p>
+                      <div className="pt-3 border-t border-white/10">
+                        <p className="text-xs font-bold text-slate-400 mb-1">Specific Remarks</p>
+                        <p className="text-sm font-medium text-slate-300 italic">"{dQM[4] ?? modalData.remarks}"</p>
                       </div>
                     )}
                   </div>
@@ -326,11 +326,11 @@ export default function QuizPerformancePage() {
               </div>
 
               {/* ── MODAL FOOTER ── */}
-              <div className="shrink-0 px-6 py-4 border-t border-gray-100 flex gap-3" style={{ background: '#FAFAFA' }}>
+              <div className="shrink-0 px-6 py-4 border-t border-white/10 flex gap-3 bg-white/5">
                 <button
                   onClick={() => setModalData(null)}
-                  className="px-5 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:bg-gray-50"
-                  style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:bg-white/10 text-slate-300"
+                  style={{ borderColor: 'rgba(255,255,255,0.15)' }}
                 >
                   Close
                 </button>

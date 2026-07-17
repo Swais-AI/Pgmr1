@@ -156,8 +156,8 @@ function ConvItem({
       onClick={onClick}
       className={`w-full text-left px-3 py-3 rounded-xl transition-all border ${
         selected
-          ? 'bg-orange-50 border-orange-200'
-          : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-100'
+          ? 'bg-orange-500/10 border-orange-500/40'
+          : 'bg-transparent border-transparent hover:bg-white/10'
       }`}
     >
       <div className="flex items-start gap-3">
@@ -167,20 +167,20 @@ function ConvItem({
 
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-center gap-1">
-            <p className="text-sm font-semibold text-gray-900 truncate">
+            <p className="text-sm font-semibold text-white truncate">
               {conv.recipient_name}
             </p>
-            <span className="text-[10px] text-gray-400 shrink-0">
+            <span className="text-[10px] text-slate-500 shrink-0">
               {timeAgo(conv.latest_message_time ?? conv.updated_at)}
             </span>
           </div>
-          <p className="text-xs text-gray-500 truncate mt-0.5">
+          <p className="text-xs text-slate-400 truncate mt-0.5">
             {displaySubject ?? conv.subject}
           </p>
           <div className="flex items-center justify-between mt-1 gap-2">
             <p
               className={`text-[11px] truncate flex-1 ${
-                conv.unread_count > 0 ? 'font-semibold text-gray-800' : 'text-gray-400'
+                conv.unread_count > 0 ? 'font-semibold text-white' : 'text-slate-500'
               }`}
             >
               {isParentLast ? 'You: ' : ''}
@@ -225,9 +225,9 @@ function MessageBubble({
         >
           {initials(msg.sender_name)}
         </div>
-        <span className="text-[11px] font-semibold text-gray-500">{msg.sender_name}</span>
-        <span className="text-[10px] text-gray-300">·</span>
-        <span className="text-[10px] text-gray-400">{msgTime(msg.created_at)}</span>
+        <span className="text-[11px] font-semibold text-slate-400">{msg.sender_name}</span>
+        <span className="text-[10px] text-slate-600">·</span>
+        <span className="text-[10px] text-slate-500">{msgTime(msg.created_at)}</span>
         <SpeakBtn
           textKey={ttsKey}
           speaking={speaking}
@@ -239,8 +239,8 @@ function MessageBubble({
       <div
         className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
           isParent
-            ? 'bg-gray-800 text-white rounded-tr-sm'
-            : 'bg-orange-50 text-gray-800 border border-orange-100 rounded-tl-sm'
+            ? 'bg-slate-700 text-white rounded-tr-sm'
+            : 'bg-orange-500/15 text-orange-100 border border-orange-500/20 rounded-tl-sm'
         }`}
       >
         <p className="whitespace-pre-wrap">{displayText}</p>
@@ -331,18 +331,18 @@ function NewConversationModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="bg-slate-800 border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 shrink-0">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-white/10 shrink-0">
           <div>
-            <h3 className="font-bold text-gray-900">Start a Conversation</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h3 className="font-bold text-white">Start a Conversation</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
               Reach out to a teacher or school department
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-slate-400 hover:text-white transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -351,12 +351,12 @@ function NewConversationModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           {/* Select recipient */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-2">
+            <label className="text-xs font-semibold text-slate-400 block mb-2">
               Who would you like to contact?
             </label>
-            <div className="max-h-40 overflow-y-auto space-y-1.5 border border-gray-100 rounded-xl p-2">
+            <div className="max-h-40 overflow-y-auto space-y-1.5 border border-white/10 rounded-xl p-2">
               {recipients.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">Loading…</p>
+                <p className="text-sm text-slate-400 text-center py-4">Loading…</p>
               ) : (
                 recipients.map((r, i) => (
                   <button
@@ -365,16 +365,16 @@ function NewConversationModal({
                     onClick={() => setRecipient(r)}
                     className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                       recipient?.name === r.name
-                        ? 'bg-orange-50 border border-orange-200'
-                        : 'hover:bg-gray-50 border border-transparent'
+                        ? 'bg-orange-500/10 border border-orange-500/40'
+                        : 'hover:bg-white/10 border border-transparent'
                     }`}
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-[11px] font-black shrink-0">
                       {initials(r.name)}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800">{r.name}</p>
-                      <p className="text-[11px] text-gray-400">{r.role}</p>
+                      <p className="text-sm font-semibold text-white">{r.name}</p>
+                      <p className="text-[11px] text-slate-400">{r.role}</p>
                     </div>
                     {recipient?.name === r.name && (
                       <span className="ml-auto text-orange-500 text-base">✓</span>
@@ -387,13 +387,13 @@ function NewConversationModal({
 
           {/* Category */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1.5">
+            <label className="text-xs font-semibold text-slate-400 block mb-1.5">
               Category
             </label>
             <select
               value={category}
               onChange={e => setCategory(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100 bg-white"
+              className="w-full border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-orange-400 bg-slate-700"
             >
               {CATEGORIES.map(c => (
                 <option key={c} value={c}>{c}</option>
@@ -410,22 +410,22 @@ function NewConversationModal({
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">From Date</label>
+                  <label className="text-xs text-slate-400 block mb-1">From Date</label>
                   <input
                     type="date"
                     value={leaveFrom}
                     onChange={e => setLeaveFrom(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100 bg-white"
+                    className="w-full border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-teal-400 bg-slate-700"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">To Date</label>
+                  <label className="text-xs text-slate-400 block mb-1">To Date</label>
                   <input
                     type="date"
                     value={leaveTo}
                     min={leaveFrom}
                     onChange={e => setLeaveTo(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100 bg-white"
+                    className="w-full border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-teal-400 bg-slate-700"
                   />
                 </div>
               </div>
@@ -434,7 +434,7 @@ function NewConversationModal({
 
           {/* Subject */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1.5">
+            <label className="text-xs font-semibold text-slate-400 block mb-1.5">
               {isLeaveRequest ? 'Subject / Reference' : 'Topic / Subject'}{' '}
               <span className="text-red-400">*</span>
             </label>
@@ -445,7 +445,7 @@ function NewConversationModal({
                 value={subject}
                 onChange={e => setSubject(e.target.value)}
                 placeholder={subjectPlaceholder}
-                className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100"
+                className="flex-1 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-orange-400 bg-slate-700"
               />
               <MicBtn
                 fieldKey="modal-subject"
@@ -461,7 +461,7 @@ function NewConversationModal({
 
           {/* Message / Leave reason */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1.5">
+            <label className="text-xs font-semibold text-slate-400 block mb-1.5">
               {isLeaveRequest ? 'Leave Reason' : 'Your Message'}{' '}
               <span className="text-red-400">*</span>
             </label>
@@ -472,7 +472,7 @@ function NewConversationModal({
                 value={firstMsg}
                 onChange={e => setFirstMsg(e.target.value)}
                 placeholder={msgPlaceholder}
-                className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100 resize-none"
+                className="flex-1 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-orange-400 bg-slate-700 resize-none"
               />
               <MicBtn
                 fieldKey="modal-message"
@@ -696,7 +696,7 @@ function CommunicationCenterInner() {
   }), [conversations, filter, search, convTranslations]);
 
   return (
-    <div className="min-h-full flex flex-col bg-[#F9FAFB] text-gray-800 font-sans">
+    <div className="min-h-full flex flex-col font-sans text-slate-200">
       <TopBar
         studentId={studentId}
         setStudentId={setStudentId}
@@ -710,14 +710,14 @@ function CommunicationCenterInner() {
       <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 72px)' }}>
 
         {/* ── LEFT PANEL: Conversation List ── */}
-        <div className="w-80 shrink-0 bg-white border-r border-gray-100 flex flex-col overflow-hidden">
+        <div className="w-80 shrink-0 bg-slate-900/50 border-r border-white/10 flex flex-col overflow-hidden">
 
           {/* Header */}
-          <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+          <div className="px-4 pt-4 pb-3 border-b border-white/10">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <ChatBubbleLeftRightIcon className="w-5 h-5 text-orange-500" />
-                <h2 className="font-bold text-gray-900 text-sm">Communication Center</h2>
+                <h2 className="font-bold text-white text-sm">Communication Center</h2>
               </div>
               <button
                 onClick={() => setShowModal(true)}
@@ -730,13 +730,13 @@ function CommunicationCenterInner() {
 
             {/* Search */}
             <div className="relative mb-2.5">
-              <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
+              <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search conversations…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:border-orange-300 transition-all"
+                className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder:text-slate-500 outline-none focus:border-orange-400 transition-all"
               />
             </div>
 
@@ -747,7 +747,7 @@ function CommunicationCenterInner() {
                   key={f}
                   onClick={() => setFilter(f)}
                   className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap transition-colors ${
-                    filter === f ? 'bg-gray-800 text-white' : 'text-gray-500 hover:bg-gray-100'
+                    filter === f ? 'bg-orange-600 text-white' : 'text-slate-400 hover:bg-white/10'
                   }`}
                 >
                   {f}
@@ -764,9 +764,9 @@ function CommunicationCenterInner() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-                <ChatBubbleLeftRightIcon className="w-10 h-10 text-gray-200 mb-3" />
-                <p className="text-sm font-semibold text-gray-400">No conversations yet</p>
-                <p className="text-xs text-gray-300 mt-1">Start one using the + button above</p>
+                <ChatBubbleLeftRightIcon className="w-10 h-10 text-slate-600 mb-3" />
+                <p className="text-sm font-semibold text-slate-400">No conversations yet</p>
+                <p className="text-xs text-slate-500 mt-1">Start one using the + button above</p>
               </div>
             ) : (
               filtered.map(c => (
@@ -784,12 +784,12 @@ function CommunicationCenterInner() {
         </div>
 
         {/* ── RIGHT PANEL: Thread ── */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {!selected ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-              <ChatBubbleLeftRightIcon className="w-14 h-14 text-gray-200 mb-4" />
-              <h3 className="text-base font-bold text-gray-500">Select a conversation</h3>
-              <p className="text-sm text-gray-400 mt-1 max-w-xs">
+              <ChatBubbleLeftRightIcon className="w-14 h-14 text-slate-600 mb-4" />
+              <h3 className="text-base font-bold text-slate-400">Select a conversation</h3>
+              <p className="text-sm text-slate-500 mt-1 max-w-xs">
                 Choose a conversation from the left panel to view messages and reply.
               </p>
               <button
@@ -803,14 +803,14 @@ function CommunicationCenterInner() {
           ) : (
             <>
               {/* Thread header */}
-              <div className="px-5 py-4 border-b border-gray-100 bg-white shrink-0">
+              <div className="px-5 py-4 border-b border-white/10 bg-slate-900/30 shrink-0">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-black shrink-0">
                     {initials(selected.recipient_name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-gray-900 text-sm">
+                      <h3 className="font-bold text-white text-sm">
                         {selected.recipient_name}
                       </h3>
                       {categoryBadge(selected.category)}
@@ -830,7 +830,7 @@ function CommunicationCenterInner() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    <p className="text-xs text-slate-400 mt-0.5 truncate">
                       {convTranslations[selected.conv_id]?.subject ?? selected.subject}
                     </p>
                   </div>
@@ -845,21 +845,21 @@ function CommunicationCenterInner() {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
-                    <p className="text-sm text-gray-400">No messages yet.</p>
-                    <p className="text-xs text-gray-300 mt-1">Send the first message below.</p>
+                    <p className="text-sm text-slate-400">No messages yet.</p>
+                    <p className="text-xs text-slate-500 mt-1">Send the first message below.</p>
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="flex-1 h-px bg-gray-100" />
-                      <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">
+                      <div className="flex-1 h-px bg-white/10" />
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">
                         {new Date(messages[0].created_at).toLocaleDateString('en-IN', {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric',
                         })}
                       </span>
-                      <div className="flex-1 h-px bg-gray-100" />
+                      <div className="flex-1 h-px bg-white/10" />
                     </div>
                     {messages.map((m, i) => {
                       const dispText  = msgTranslations[i] ?? m.message;
@@ -882,7 +882,7 @@ function CommunicationCenterInner() {
               </div>
 
               {/* Reply input with voice button */}
-              <div className="px-4 py-3 border-t border-gray-100 bg-white shrink-0">
+              <div className="px-4 py-3 border-t border-white/10 bg-slate-900/30 shrink-0">
                 <form onSubmit={handleSend} className="flex gap-2 items-end">
                   <textarea
                     rows={2}
@@ -895,7 +895,7 @@ function CommunicationCenterInner() {
                       }
                     }}
                     placeholder="Write a message to the teacher…"
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100 resize-none transition-all"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-orange-400 resize-none transition-all"
                   />
                   <MicBtn
                     fieldKey="reply"
@@ -914,7 +914,7 @@ function CommunicationCenterInner() {
                     <PaperAirplaneIcon className="w-4 h-4" />
                   </button>
                 </form>
-                <p className="text-[10px] text-gray-300 mt-1.5 ml-1">
+                <p className="text-[10px] text-slate-600 mt-1.5 ml-1">
                   Press Enter to send · Shift+Enter for new line
                 </p>
               </div>
