@@ -60,11 +60,34 @@ export default function AssignmentsPage() {
   const [modal, setModal] = useState(false);
   const [target, setTarget] = useState<Assignment|null>(null);
   const [text, setText] = useState('');
+  const [driveLink, setDriveLink] = useState('');
+  const [driveLinkError, setDriveLinkError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{m:string;ok:boolean}|null>(null);
   const [aiModal, setAiModal] = useState(false);
 
   const notify = (m:string,ok=true) => { setToast({m,ok}); setTimeout(()=>setToast(null),3000); };
+
+  const validateGoogleDriveUrl = (url: string): boolean => {
+    let parsed: URL;
+    try { parsed = new URL(url); } catch { return false; }
+    if (parsed.protocol !== 'https:') return false;
+    const ALLOWED_HOSTS = new Set(['drive.google.com', 'docs.google.com']);
+    if (!ALLOWED_HOSTS.has(parsed.hostname)) return false;
+    const p = parsed.pathname;
+    const validPath =
+      /^\/file\/d\/[^/]+/.test(p) ||
+      /^\/drive\/folders\/[^/]+/.test(p) ||
+      /^\/open$/.test(p) ||
+      /^\/document\/d\/[^/]+/.test(p) ||
+      /^\/spreadsheets\/d\/[^/]+/.test(p) ||
+      /^\/presentation\/d\/[^/]+/.test(p);
+    if (!validPath) return false;
+    if (parsed.hostname === 'drive.google.com' && /^\/open$/.test(p)) {
+      return !!parsed.searchParams.get('id');
+    }
+    return true;
+  };
 
   const load = async () => {
     if (!studentId) return; // wait for real studentId
@@ -131,17 +154,29 @@ export default function AssignmentsPage() {
 
   const doSubmit = async () => {
     if(!text.trim()||!target) return;
+    const trimmedLink = driveLink.trim();
+    if (trimmedLink && !validateGoogleDriveUrl(trimmedLink)) {
+      setDriveLinkError('Please enter a valid Google Drive link.');
+      return;
+    }
+    setDriveLinkError('');
     setSubmitting(true);
     try {
-      const up = await submitAssignment({assignment_id:target.assignment_id,student_id:studentId,submission_text:text});
+      const payload: { assignment_id: number; student_id: number; submission_text: string; file_path?: string } = {
+        assignment_id: target.assignment_id,
+        student_id: studentId,
+        submission_text: text,
+      };
+      if (trimmedLink) payload.file_path = trimmedLink;
+      const up = await submitAssignment(payload);
       setAssignments(p=>p.map(a=>a.assignment_id===up.assignment_id?up:a));
       if(drawer?.assignment_id===up.assignment_id) setDrawer(up);
-      await load(); setModal(false); setText(''); notify('Submitted successfully!');
+      await load(); setModal(false); setText(''); setDriveLink(''); setDriveLinkError(''); notify('Submitted successfully!');
     } catch { notify('Submission failed.',false); }
     finally { setSubmitting(false); }
   };
 
-  const openModal = (a?:Assignment) => { setTarget(a||null); setText(''); setModal(true); };
+  const openModal = (a?:Assignment) => { setTarget(a||null); setText(''); setDriveLink(''); setDriveLinkError(''); setModal(true); };
 
   const cards = [
     {label:'Total',val:analytics.total,note:'All assignments',icon:'📋',c:'#6366F1'},
@@ -476,10 +511,10 @@ export default function AssignmentsPage() {
                   <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#E2E8F0'}}>Select Assignment</label>
                   <select onChange={e=>{const f=assignments.find(a=>a.assignment_id===Number(e.target.value));setTarget(f||null);}}
                     className="w-full border rounded-xl px-3 py-2.5 text-sm font-medium outline-none"
-                    style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',background:'rgba(255,255,255,0.05)'}}>
-                    <option value="" style={{color:'#64748B'}}>— Choose an assignment —</option>
+                    style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',background:'#1e293b'}}>
+                    <option value="" style={{background:'#1e293b',color:'#94A3B8'}}>— Choose an assignment —</option>
                     {assignments.filter(a=>['Upcoming','Ongoing','Overdue'].includes(a.status)).map(a=>(
-                      <option key={a.assignment_id} value={a.assignment_id} style={{color:'#F8FAFC'}}>
+                      <option key={a.assignment_id} value={a.assignment_id} style={{background:'#1e293b',color:'#F8FAFC'}}>
                         {a.assignment_title} · {a.subject} · Due {fmt(a.due_date)}
                       </option>
                     ))}
@@ -512,11 +547,25 @@ export default function AssignmentsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#E2E8F0'}}>Attachment (optional)</label>
-                <div className="border-2 border-dashed rounded-xl p-4 text-center" style={{borderColor:'rgba(255,255,255,0.1)'}}>
-                  <p className="text-sm" style={{color:'#64748B'}}>📎 Drag & drop or paste a file link</p>
-                  <input type="text" placeholder="https://drive.google.com/..." className="mt-2 w-full text-sm border rounded-lg px-3 py-2 outline-none bg-slate-700 placeholder:text-slate-500"
-                    style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)'}}/>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wide" style={{color:'#E2E8F0'}}>Google Drive Link <span style={{color:'#94A3B8',fontWeight:400,textTransform:'none',letterSpacing:0}}>(optional)</span></label>
+                <div className="border-2 border-dashed rounded-xl p-4" style={{borderColor:'rgba(255,255,255,0.1)'}}>
+                  <p className="text-xs mb-2" style={{color:'#64748B'}}>📎 Paste a Google Drive or Google Docs link</p>
+                  <input
+                    type="text"
+                    value={driveLink}
+                    onChange={e => { setDriveLink(e.target.value); setDriveLinkError(''); }}
+                    placeholder="https://drive.google.com/..."
+                    className="w-full text-sm border rounded-lg px-3 py-2 outline-none bg-slate-700 placeholder:text-slate-500"
+                    style={{color:'#F8FAFC',borderColor:driveLinkError?'#DC2626':'rgba(255,255,255,0.1)'}}
+                    onFocus={e=>e.target.style.borderColor=driveLinkError?'#DC2626':'#EA580C'}
+                    onBlur={e=>e.target.style.borderColor=driveLinkError?'#DC2626':'rgba(255,255,255,0.1)'}
+                  />
+                  {driveLinkError && (
+                    <p className="flex items-center gap-1 text-xs font-semibold mt-1.5" style={{color:'#F87171'}}>
+                      <span>⚠️</span> {driveLinkError}
+                    </p>
+                  )}
+                  {!driveLinkError && <p className="text-[10px] mt-1.5" style={{color:'#475569'}}>Accepted: drive.google.com · docs.google.com (HTTPS only)</p>}
                 </div>
               </div>
 
