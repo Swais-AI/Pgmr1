@@ -1,6 +1,32 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, validator
 from typing import List, Optional
 from datetime import date, datetime
+from urllib.parse import urlparse
+
+_ALLOWED_GOOGLE_HOSTS = frozenset({'drive.google.com', 'docs.google.com'})
+
+def _validate_google_drive_url(url: str) -> str:
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        raise ValueError("Please enter a valid Google Drive link.")
+    if parsed.scheme != 'https':
+        raise ValueError("Please enter a valid Google Drive link.")
+    if parsed.hostname not in _ALLOWED_GOOGLE_HOSTS:
+        raise ValueError("Please enter a valid Google Drive link.")
+    p = parsed.path
+    import re
+    valid = (
+        re.match(r'^/file/d/[^/]+', p) or
+        re.match(r'^/drive/folders/[^/]+', p) or
+        (re.match(r'^/open$', p) and 'id=' in (parsed.query or '')) or
+        re.match(r'^/document/d/[^/]+', p) or
+        re.match(r'^/spreadsheets/d/[^/]+', p) or
+        re.match(r'^/presentation/d/[^/]+', p)
+    )
+    if not valid:
+        raise ValueError("Please enter a valid Google Drive link.")
+    return url
 
 class StudentSchema(BaseModel):
     student_id: int
@@ -32,6 +58,13 @@ class AssignmentSubmitRequest(BaseModel):
     student_id: int
     submission_text: str
     file_path: Optional[str] = None
+
+    @validator('file_path', pre=True, always=True)
+    @classmethod
+    def validate_file_path(cls, v):
+        if v is None or v == '':
+            return v
+        return _validate_google_drive_url(v)
 
 class AssignmentAnalyticsResponse(BaseModel):
     total: int
