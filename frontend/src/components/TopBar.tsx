@@ -3,10 +3,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import ChildSelector from './ChildSelector';
 import LanguageSelector from './LanguageSelector';
 import { fetchNotifications } from '@/lib/api';
-import { clearAICache } from '@/lib/aiService';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BellIcon, Bars3Icon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { BellIcon, Bars3Icon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 // ── localStorage helpers for client-side read tracking ───────────────────────
 
@@ -36,52 +35,6 @@ function notifIcon(type: string) {
   return map[type] ?? '🔔';
 }
 
-// ── Logout Confirmation Dialog ────────────────────────────────────────────────
-
-function LogoutDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm z-[210] overflow-hidden border border-white/10">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-full bg-red-500/20 flex items-center justify-center text-xl shrink-0">👋</div>
-            <div>
-              <h3 className="font-black text-white text-lg leading-tight">Log out?</h3>
-              <p className="text-sm text-slate-400 mt-0.5">Are you sure you want to logout?</p>
-            </div>
-          </div>
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={onCancel}
-              className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-slate-300 hover:bg-white/10 transition-colors"
-              style={{ borderColor: 'rgba(255,255,255,0.15)' }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onConfirm}
-              className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white bg-red-500 hover:bg-red-600 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-
-function Toast({ message }: { message: string }) {
-  return (
-    <div className="fixed top-4 right-4 z-[300] bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg">
-      {message}
-    </div>
-  );
-}
-
 // ── TopBar ────────────────────────────────────────────────────────────────────
 
 export default function TopBar({
@@ -90,8 +43,6 @@ export default function TopBar({
   const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile,       setShowProfile]       = useState(false);
-  const [showLogoutDlg,     setShowLogoutDlg]     = useState(false);
-  const [showToast,         setShowToast]          = useState(false);
   const [notifications,     setNotifications]     = useState<any[]>([]);
   const [readIds,           setReadIds]            = useState<Set<string>>(new Set());
 
@@ -198,16 +149,6 @@ export default function TopBar({
         } catch { /* ignore */ }
       }
     }
-  };
-
-  const handleLogoutConfirm = () => {
-    clearAICache();
-    setShowLogoutDlg(false);
-    setShowProfile(false);
-    setShowToast(true);
-    setTimeout(() => {
-      window.location.replace('https://staging.sgs.swais.in');
-    }, 1000);
   };
 
   return (
@@ -342,13 +283,6 @@ export default function TopBar({
                     <UserCircleIcon className="w-4 h-4 text-slate-400" />
                     Dashboard
                   </Link>
-                  <button
-                    onClick={() => { setShowProfile(false); setShowLogoutDlg(true); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                    Logout
-                  </button>
                 </div>
               </div>
             )}
@@ -356,14 +290,6 @@ export default function TopBar({
         </div>
       </header>
 
-      {showLogoutDlg && (
-        <LogoutDialog
-          onConfirm={handleLogoutConfirm}
-          onCancel={() => setShowLogoutDlg(false)}
-        />
-      )}
-
-      {showToast && <Toast message="You have been logged out successfully." />}
     </>
   );
 }

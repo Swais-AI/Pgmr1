@@ -2,11 +2,62 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { clearAICache } from '@/lib/aiService';
+
+// ── Logout Confirmation Dialog ────────────────────────────────────────────────
+
+function LogoutDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm z-[210] overflow-hidden border border-white/10">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-11 h-11 rounded-full bg-red-500/20 flex items-center justify-center text-xl shrink-0">👋</div>
+            <div>
+              <h3 className="font-black text-white text-lg leading-tight">Log out?</h3>
+              <p className="text-sm text-slate-400 mt-0.5">Are you sure you want to logout?</p>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={onCancel}
+              className="flex-1 py-2.5 rounded-xl border font-semibold text-sm text-slate-300 hover:bg-white/10 transition-colors"
+              style={{ borderColor: 'rgba(255,255,255,0.15)' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white bg-red-500 hover:bg-red-600 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ message }: { message: string }) {
+  return (
+    <div className="fixed top-4 right-4 z-[300] bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg">
+      {message}
+    </div>
+  );
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutDlg, setShowLogoutDlg] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   // Listen for toggle events dispatched by TopBar's hamburger button
   useEffect(() => {
@@ -19,6 +70,21 @@ export default function Sidebar() {
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  const handleLogoutConfirm = () => {
+    const sgsUrl = process.env.NEXT_PUBLIC_SGS_URL;
+    if (!sgsUrl) {
+      console.error('[SGS] NEXT_PUBLIC_SGS_URL is not configured. Cannot redirect after logout.');
+      alert('Logout redirect is not configured. Please contact your administrator.');
+      return;
+    }
+    clearAICache();
+    setShowLogoutDlg(false);
+    setShowToast(true);
+    setTimeout(() => {
+      window.location.replace(sgsUrl);
+    }, 1000);
+  };
 
   const menuItems = [
     { name: 'Dashboard',            icon: '🏠', path: '/parent/dashboard' },
@@ -83,6 +149,17 @@ export default function Sidebar() {
                 </li>
               );
             })}
+
+            {/* Logout — separated from nav items by a divider */}
+            <li className="pt-2 mt-2 border-t border-white/10">
+              <button
+                onClick={() => setShowLogoutDlg(true)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5 shrink-0" />
+                <span className="font-medium">Logout</span>
+              </button>
+            </li>
           </ul>
         </nav>
 
@@ -97,6 +174,15 @@ export default function Sidebar() {
           </div>
         </div>
       </aside>
+
+      {showLogoutDlg && (
+        <LogoutDialog
+          onConfirm={handleLogoutConfirm}
+          onCancel={() => setShowLogoutDlg(false)}
+        />
+      )}
+
+      {showToast && <Toast message="You have been logged out successfully." />}
     </>
   );
 }
