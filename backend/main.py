@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 from database import engine, Base, DB_PREFIX
 import models
 from routers import dashboard, translation, communication, debug, assessments
@@ -16,17 +15,13 @@ logging.basicConfig(level=logging.INFO)
 # immediately if a *required* table is missing instead of crashing mid-request.
 run_startup_checks(raise_on_error=True)
 
-# Create tables (IF NOT EXISTS — safe for both fresh and existing databases)
-Base.metadata.create_all(bind=engine)
-
-# Back-fill recipient_name on existing support_tickets tables.
-# Uses DB_PREFIX so this is correct for both local and sgs_* RDS targets.
-with engine.connect() as _conn:
-    _conn.execute(text(
-        f"ALTER TABLE {DB_PREFIX}support_tickets "
-        "ADD COLUMN IF NOT EXISTS recipient_name VARCHAR"
-    ))
-    _conn.commit()
+# ── Local development only: auto-create missing tables ───────────────────────
+# Runs only when DB_TABLE_PREFIX is empty (local dev, no prefix).
+# Production uses DB_TABLE_PREFIX="sgs_" and manages schema via migration
+# scripts (see migrate_add_recipient_name.py) — create_all() is skipped there
+# to avoid requiring DDL privileges on the shared RDS instance.
+if not DB_PREFIX:
+    Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Parent Dashboard API")
 
