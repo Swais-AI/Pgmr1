@@ -61,14 +61,6 @@ def get_available_recipients(student_id: int, db: Session = Depends(get_db)):
             ))
             seen.add(user.user_id)
 
-    # Always append standard school departments
-    result += [
-        TeacherOptionSchema(teacher_id=None, name="Class Teacher",      role="Class Coordinator"),
-        TeacherOptionSchema(teacher_id=None, name="Principal Office",   role="School Administration"),
-        TeacherOptionSchema(teacher_id=None, name="Transport Dept.",    role="Transport & Logistics"),
-        TeacherOptionSchema(teacher_id=None, name="Accounts & Fees",    role="Fee Management"),
-        TeacherOptionSchema(teacher_id=None, name="Library",            role="Library & Resources"),
-    ]
     return result
 
 
