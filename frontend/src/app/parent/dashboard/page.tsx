@@ -126,7 +126,7 @@ export default function ParentDashboard() {
   const panelStatus = aiStatus === 'success' && translatingInsight ? 'loading' : aiStatus;
 
   useEffect(() => {
-    if (!studentId) return; // wait for real studentId from localStorage / ChildSelector
+    if (!studentId) { setIsLoading(false); return; }
     const load = async () => {
       setIsLoading(true); setError(null); setData(null);
       try {

@@ -193,7 +193,7 @@ export default function TopBar({
             </button>
 
             {showNotifications && (
-              <div className="absolute top-10 right-0 w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
+              <div className="absolute top-10 right-0 w-80 max-w-[calc(100vw-1rem)] bg-slate-800 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
                 <div className="p-4 bg-white/5 border-b border-white/10 flex justify-between items-center">
                   <h3 className="font-bold text-white text-sm">
                     Notifications {unreadCount > 0 && <span className="text-orange-500">({unreadCount} new)</span>}
@@ -269,7 +269,7 @@ export default function TopBar({
             </button>
 
             {showProfile && (
-              <div className="absolute top-12 right-0 w-52 bg-slate-800 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
+              <div className="absolute top-12 right-0 w-52 max-w-[calc(100vw-1rem)] bg-slate-800 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
                 <div className="p-4 border-b border-white/10 bg-white/5">
                   <p className="font-bold text-white text-sm">Priya Sharma</p>
                   <p className="text-xs text-slate-400 mt-0.5">Parent Account</p>

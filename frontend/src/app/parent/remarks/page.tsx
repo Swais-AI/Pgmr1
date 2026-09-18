@@ -120,7 +120,7 @@ export default function RemarksHistory() {
   }, [studentId]);
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId) { setIsLoading(false); return; }
     const loadHistory = async () => {
       setIsLoading(true);
       setSubj('All Subjects');

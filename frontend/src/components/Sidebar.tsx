@@ -108,7 +108,7 @@ export default function Sidebar() {
 
       <aside
         className={`
-          w-64 bg-slate-900/95 backdrop-blur-md text-white flex flex-col h-screen
+          w-full sm:w-64 bg-slate-900/95 backdrop-blur-md text-white flex flex-col h-screen
           fixed left-0 top-0 overflow-y-auto z-40 border-r border-white/5
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}

@@ -108,7 +108,7 @@ export default function NoticesHistory() {
   }, [studentId]);
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId) { setIsLoading(false); return; }
     const loadData = async () => {
       setIsLoading(true);
       try {
