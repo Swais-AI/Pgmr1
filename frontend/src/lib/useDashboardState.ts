@@ -75,14 +75,22 @@ export function useDashboardState() {
       localStorage.removeItem('sgs_parent_id');
       localStorage.removeItem(PARENT_NAME_KEY);
       setParentName(null);
-    } else if (savedStudent) {
-      const sid = Number(savedStudent);
-      if (sid > 0) setStudentId(sid);
     }
 
     const token = handed ?? getSessionToken();
 
+    // A remembered child selection is only meaningful inside a session. With
+    // no token, leave studentId at 0 so nothing is fetched — otherwise a
+    // stale sgs_student_id from an earlier visit would show that child's data
+    // to whoever opens the page next.
+    if (token && !handed && savedStudent) {
+      const sid = Number(savedStudent);
+      if (sid > 0) setStudentId(sid);
+    }
+
     if (!token) {
+      localStorage.removeItem('sgs_student_id');
+      localStorage.removeItem('sgs_parent_id');
       if (IS_DEV) {
         console.warn('[SGS] No session token — using demo parent', DEMO_PARENT_ID, '(development only)');
         setParentId(DEMO_PARENT_ID);
