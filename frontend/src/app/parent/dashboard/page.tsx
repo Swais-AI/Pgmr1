@@ -112,7 +112,9 @@ const BAR_COLORS = [
 // ── Main Page ─────────────────────────────────────────────────────────────
 
 export default function ParentDashboard() {
-  const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
+  const { studentId, setStudentId, parentId, parentName, language, setLanguage } = useDashboard();
+  const greetName = (parentName ?? 'Parent').replace(/^TEST_/i, '');
+  const greetInitials = greetName.split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || 'P';
   const [data,      setData]      = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error,     setError]     = useState<string | null>(null);
@@ -224,11 +226,11 @@ export default function ParentDashboard() {
               {/* ── Greeting ── */}
               <div className="bg-white/5 rounded-2xl border border-white/10 p-4 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-black text-base border-2 border-orange-100 shrink-0">
-                  PS
+                  {greetInitials}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-slate-400">{timeGreeting()},</p>
-                  <p className="text-lg font-black text-white leading-tight">Priya Sharma 👋</p>
+                  <p className="text-lg font-black text-white leading-tight">{greetName} 👋</p>
                   {studentName && (
                     <p className="text-xs text-slate-400 mt-0.5 truncate">
                       Viewing <span className="font-semibold text-slate-300">{studentName}</span> Dashboard

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base, DB_PREFIX
 import models
-from routers import dashboard, translation, communication, debug, assessments
+from routers import auth, dashboard, translation, communication, debug, assessments
 from startup_check import run_startup_checks
 import logging
 
@@ -35,6 +35,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router)          # /auth/sso-token, /auth/me — parent identity
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(translation.router, tags=["Translation"])
 app.include_router(communication.router)

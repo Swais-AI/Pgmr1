@@ -2,10 +2,31 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ChildSelector from './ChildSelector';
 import LanguageSelector from './LanguageSelector';
-import { fetchNotifications } from '@/lib/api';
+import { fetchNotifications, PARENT_NAME_KEY, SESSION_EVENT } from '@/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BellIcon, Bars3Icon, UserCircleIcon } from '@heroicons/react/24/outline';
+
+// ── Who is logged in ──────────────────────────────────────────────────────────
+// useDashboardState resolves the parent from the session token and publishes
+// the name; this hook just listens so TopBar needs no new props from pages.
+
+function useParentName(): string | null {
+  const [name, setName] = useState<string | null>(null);
+  useEffect(() => {
+    setName(localStorage.getItem(PARENT_NAME_KEY));
+    const onSession = (e: Event) => setName((e as CustomEvent).detail?.parentName ?? null);
+    window.addEventListener(SESSION_EVENT, onSession);
+    return () => window.removeEventListener(SESSION_EVENT, onSession);
+  }, []);
+  return name;
+}
+
+function initialsOf(name: string | null): string {
+  if (!name) return 'P';
+  const parts = name.replace(/^TEST_/i, '').trim().split(/\s+/);
+  return (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '') || 'P';
+}
 
 // ── localStorage helpers for client-side read tracking ───────────────────────
 
@@ -41,6 +62,8 @@ export default function TopBar({
   studentId, setStudentId, parentId = 0, language, setLanguage, isLoading = false,
 }: any) {
   const router = useRouter();
+  const parentName = useParentName();
+  const displayName = parentName ?? 'Parent';
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile,       setShowProfile]       = useState(false);
   const [notifications,     setNotifications]     = useState<any[]>([]);
@@ -260,18 +283,18 @@ export default function TopBar({
               aria-label="Profile menu"
             >
               <div className="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 font-black text-sm shadow-sm shrink-0">
-                PS
+                {initialsOf(parentName)}
               </div>
               <div className="text-sm hidden sm:block text-left">
                 <p className="text-slate-400 text-xs">Welcome,</p>
-                <p className="font-bold text-white">Priya Sharma</p>
+                <p className="font-bold text-white">{displayName}</p>
               </div>
             </button>
 
             {showProfile && (
               <div className="absolute top-12 right-0 w-52 bg-slate-800 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
                 <div className="p-4 border-b border-white/10 bg-white/5">
-                  <p className="font-bold text-white text-sm">Priya Sharma</p>
+                  <p className="font-bold text-white text-sm">{displayName}</p>
                   <p className="text-xs text-slate-400 mt-0.5">Parent Account</p>
                 </div>
                 <div className="py-1">
