@@ -30,19 +30,21 @@ def get_dashboard_data(db: Session, student_id: int):
     now = datetime.utcnow()
 
     # 1. Student Info
+    # outerjoin: students whose class_id is NULL are still returned; class_info
+    # will be None for them. INNER JOIN was silently dropping such students (404).
     student_query = db.query(StudentMaster, ClassMaster)\
-        .join(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
+        .outerjoin(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
         .filter(StudentMaster.student_id == student_id).first()
-        
+
     if not student_query:
         raise HTTPException(status_code=404, detail="Student not found")
-        
+
     student, class_info = student_query
-    
+
     student_data = StudentSchema(
         student_id=student.student_id,
         full_name=student.full_name,
-        class_name=class_info.class_name,
+        class_name=class_info.class_name if class_info else "Unknown",
         section=student.section,
         roll_no=student.roll_no or ""
     )
@@ -54,7 +56,7 @@ def get_dashboard_data(db: Session, student_id: int):
     .join(ChapterMaster, AssignmentMaster.chapter_id == ChapterMaster.chapter_id)\
     .join(SubjectMaster, ChapterMaster.subject_id == SubjectMaster.subject_id)\
     .outerjoin(StudentSubmission, (StudentSubmission.assignment_id == AssignmentMaster.assignment_id) & (StudentSubmission.student_id == student_id))\
-    .filter(SubjectMaster.class_id == student.class_id)\
+    .filter(SubjectMaster.class_id == student.class_id if student.class_id is not None else False)\
     .order_by(AssignmentMaster.due_date.desc()).all()
         
     assignment_list = []
@@ -103,7 +105,7 @@ def get_dashboard_data(db: Session, student_id: int):
     .join(ChapterMaster, QuizMaster.chapter_id == ChapterMaster.chapter_id)\
     .join(SubjectMaster, ChapterMaster.subject_id == SubjectMaster.subject_id)\
     .outerjoin(QuizResponse, (QuizResponse.quiz_id == QuizMaster.quiz_id) & (QuizResponse.student_id == student_id))\
-    .filter(SubjectMaster.class_id == student.class_id).all()
+    .filter(SubjectMaster.class_id == student.class_id if student.class_id is not None else False).all()
         
     quiz_list = []
     subject_scores = {}
@@ -181,7 +183,7 @@ def get_dashboard_data(db: Session, student_id: int):
         .filter(NoticeBoard.notice_text != '')\
         .filter(
             or_(
-                NoticeBoard.applicable_class == class_info.class_name,
+                NoticeBoard.applicable_class == (class_info.class_name if class_info else None),
                 NoticeBoard.applicable_class == 'All',
                 NoticeBoard.applicable_class.is_(None),
             )

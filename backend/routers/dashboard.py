@@ -83,7 +83,7 @@ def get_dashboard(student_id: int, db: Session = Depends(get_db)):
 def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
     children_query = db.query(StudentMaster, ClassMaster)\
         .join(ParentStudentMap, ParentStudentMap.student_id == StudentMaster.student_id)\
-        .join(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
+        .outerjoin(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
         .filter(ParentStudentMap.parent_id == parent_id).all()
 
     result = []
@@ -91,8 +91,8 @@ def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
         result.append(MappedChildSchema(
             student_id=student.student_id,
             full_name=student.full_name,
-            class_name=class_info.class_name,
-            section=student.section
+            class_name=class_info.class_name if class_info else "Unknown Class",
+            section=student.section or ""
         ))
     logger.info("[parents/children] parent_id=%s → %d children found", parent_id, len(result))
     return result
