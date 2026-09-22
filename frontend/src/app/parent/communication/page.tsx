@@ -574,7 +574,7 @@ function CommunicationCenterInner() {
 
   // Load conversations — guard against firing before real IDs are available
   const loadConversations = useCallback(async () => {
-    if (!studentId || !parentId) return;
+    if (!studentId || !parentId) { setIsLoading(false); return; }
     setIsLoading(true);
     try {
       console.log('[SGS] CommunicationCenter: loading conversations for student', studentId, 'parent', parentId);

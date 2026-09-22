@@ -90,11 +90,18 @@ export default function AssignmentsPage() {
   };
 
   const load = async () => {
-    if (!studentId) return; // wait for real studentId
+    if (!studentId) { setIsLoading(false); return; }
     setIsLoading(true);
     console.log('[SGS] Assignments: fetching for student_id', studentId);
-    const [a,an] = await Promise.all([fetchAssignmentsHistory(studentId),fetchAssignmentAnalytics(studentId)]);
-    setAssignments(a); setAnalytics(an); setIsLoading(false);
+    try {
+      const [a, an] = await Promise.all([fetchAssignmentsHistory(studentId), fetchAssignmentAnalytics(studentId)]);
+      setAssignments(a);
+      setAnalytics(an);
+    } catch (e) {
+      console.error('[SGS] Assignments: failed to load', e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(()=>{ load(); setDrawer(null); setTab('All'); },[studentId]);
@@ -247,7 +254,7 @@ export default function AssignmentsPage() {
                   style={{color:'#F8FAFC',borderColor:'rgba(255,255,255,0.1)',background:'#334155'}}>
                   {['All','Upcoming','Ongoing','Submitted','Graded','Overdue'].map(s=><option key={s} value={s} style={{background:'#334155',color:'#F8FAFC'}}>{s==='All'?'All Status':s}</option>)}
                 </select>
-                <div className="flex-1 relative min-w-[200px]">
+                <div className="flex-1 relative min-w-[140px]">
                   <span className="absolute left-3 top-2.5 text-base">🔍</span>
                   <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by title, subject, chapter..."
                     className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg outline-none placeholder:text-slate-400"

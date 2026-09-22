@@ -63,7 +63,7 @@ export default function QuizPerformancePage() {
   const [talkLoading, setTalkLoading] = useState(false);
 
   useEffect(() => {
-    if (!studentId) return; // wait for real studentId
+    if (!studentId) { setIsLoading(false); return; }
     const load = async () => {
       setIsLoading(true);
       setModalData(null);
@@ -192,7 +192,7 @@ export default function QuizPerformancePage() {
                   className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[140px]">
                   {subjects.map(s => <option key={s} value={s}>{s === 'All' ? 'All Subjects' : s}</option>)}
                 </select>
-                <div className="flex-1 relative min-w-[200px]">
+                <div className="flex-1 relative min-w-[140px]">
                   <span className="absolute left-3 top-2.5 text-sm text-slate-400">🔍</span>
                   <input value={search} onChange={e => setSearch(e.target.value)}
                     placeholder="Search quizzes..."

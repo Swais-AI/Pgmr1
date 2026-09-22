@@ -152,7 +152,7 @@ export default function AssessmentsPage() {
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId) { setIsLoading(false); return; }
     const load = async () => {
       setIsLoading(true);
       setModalData(null);
@@ -319,7 +319,7 @@ export default function AssessmentsPage() {
               <select
                 value={subjectFilter}
                 onChange={e => setSubjectFilter(e.target.value)}
-                className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[160px]"
+                className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[120px] flex-1 sm:flex-none"
               >
                 {subjects.map(s => (
                   <option key={s} value={s}>{s}</option>
@@ -330,7 +330,7 @@ export default function AssessmentsPage() {
               <select
                 value={timelineFilter}
                 onChange={e => { setTimelineFilter(e.target.value); setCustomStart(''); setCustomEnd(''); }}
-                className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[200px]"
+                className="bg-slate-800 border border-white/10 text-white text-sm font-semibold rounded-lg px-3 py-2 outline-none min-w-[120px] flex-1 sm:flex-none"
               >
                 {TIMELINE_OPTIONS.map(t => (
                   <option key={t} value={t}>{t}</option>

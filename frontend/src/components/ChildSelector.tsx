@@ -88,9 +88,9 @@ export default function ChildSelector({
   const activeChild = children.find(c => c.student_id === currentStudentId);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-w-0 flex-1 max-w-[220px]">
       <label className="text-xs font-semibold text-gray-500 mb-1 ml-1">Select Child</label>
-      <div className="flex items-center bg-white border border-gray-200 rounded-full px-3 py-1.5 shadow-sm">
+      <div className="flex items-center bg-white border border-gray-200 rounded-full px-3 py-1.5 shadow-sm min-w-0">
         <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold mr-2">
           {activeChild?.full_name?.charAt(0) || 'S'}
         </div>
@@ -98,7 +98,7 @@ export default function ChildSelector({
           value={currentStudentId}
           onChange={e => onSelect(Number(e.target.value))}
           disabled={disabled || loading}
-          className="bg-transparent focus:outline-none disabled:opacity-50 text-gray-800 text-sm font-semibold appearance-none pr-6 cursor-pointer"
+          className="bg-transparent focus:outline-none disabled:opacity-50 text-gray-800 text-sm font-semibold appearance-none pr-6 cursor-pointer min-w-0 truncate"
           style={{
             backgroundImage:
               'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
