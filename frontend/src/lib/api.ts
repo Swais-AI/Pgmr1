@@ -8,6 +8,38 @@ export const api = axios.create({
   },
 });
 
+// ── Session token ─────────────────────────────────────────────────────────
+// The login portal hands the dashboard a signed token in the redirect URL;
+// useDashboardState stores it here. Every request carries it so the backend
+// can tell whose data it is serving without trusting anything else the client
+// sends. Routes that don't yet check it simply ignore the header.
+
+export const TOKEN_KEY = 'sgs_token';
+export const PARENT_NAME_KEY = 'sgs_parent_name';
+/** Fired on window whenever the session's parent changes (login, logout). */
+export const SESSION_EVENT = 'sgs:session';
+
+export const getSessionToken = (): string | null =>
+  typeof window === 'undefined' ? null : localStorage.getItem(TOKEN_KEY);
+
+export const setSessionToken = (token: string | null) => {
+  if (typeof window === 'undefined') return;
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
+};
+
+api.interceptors.request.use((config) => {
+  const token = getSessionToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+/** Who does the current token belong to? Throws on a missing/invalid token. */
+export const fetchMe = async (): Promise<{ parent_id: number; full_name: string | null; email: string | null }> => {
+  const response = await api.get('/auth/me');
+  return response.data;
+};
+
 export const fetchDashboardData = async (studentId: number) => {
   const response = await api.get(`/dashboard/${studentId}`);
   return response.data;
