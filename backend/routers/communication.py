@@ -23,6 +23,7 @@ from models import (
     # TeacherMaster removed: SubjectMaster.teacher_id now FKs to
     # users_masters.user_id, so the teacher-lookup JOIN uses UsersMaster.
 )
+from auth import get_current_parent_or_demo, verify_student_ownership, verify_conversation_ownership
 from schemas import (
     TeacherOptionSchema,
     ConversationSummarySchema,
@@ -36,7 +37,8 @@ router = APIRouter(prefix="/comm", tags=["Communication"])
 # ── Available teachers / departments for a student's class ─────────────────
 
 @router.get("/teachers/{student_id}", response_model=List[TeacherOptionSchema])
-def get_available_recipients(student_id: int, db: Session = Depends(get_db)):
+def get_available_recipients(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
@@ -67,12 +69,13 @@ def get_available_recipients(student_id: int, db: Session = Depends(get_db)):
 # ── List conversations for a student ──────────────────────────────────────
 
 @router.get("/conversations/{student_id}", response_model=List[ConversationSummarySchema])
-def list_conversations(student_id: int, parent_id: int = 1, db: Session = Depends(get_db)):
+def list_conversations(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     tickets = (
         db.query(SupportTicket)
         .filter(
             SupportTicket.student_id == student_id,
-            SupportTicket.parent_id == parent_id,
+            SupportTicket.parent_id == current.parent_id,
         )
         .order_by(SupportTicket.updated_at.desc())
         .all()
@@ -115,11 +118,12 @@ def list_conversations(student_id: int, parent_id: int = 1, db: Session = Depend
 # ── Create new conversation ────────────────────────────────────────────────
 
 @router.post("/conversations", response_model=ConversationSummarySchema)
-def create_conversation(body: CreateConversationSchema, db: Session = Depends(get_db)):
+def create_conversation(body: CreateConversationSchema, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, body.student_id)
     ref = f"CONV-{str(uuid.uuid4())[:8].upper()}"
     ticket = SupportTicket(
         ticket_number=ref,
-        parent_id=body.parent_id,
+        parent_id=current.parent_id,
         student_id=body.student_id,
         subject=body.subject,
         category=body.category,
@@ -161,7 +165,8 @@ def create_conversation(body: CreateConversationSchema, db: Session = Depends(ge
 # ── Get messages for a conversation ──────────────────────────────────────
 
 @router.get("/conversations/{conv_id}/messages", response_model=List[ConversationMessageSchema])
-def get_messages(conv_id: int, db: Session = Depends(get_db)):
+def get_messages(conv_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_conversation_ownership(db, current, conv_id)
     ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == conv_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -198,7 +203,8 @@ def get_messages(conv_id: int, db: Session = Depends(get_db)):
 # ── Send a message ────────────────────────────────────────────────────────
 
 @router.post("/conversations/{conv_id}/messages", response_model=ConversationMessageSchema)
-def send_message(conv_id: int, body: SendConversationMessageSchema, db: Session = Depends(get_db)):
+def send_message(conv_id: int, body: SendConversationMessageSchema, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_conversation_ownership(db, current, conv_id)
     ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == conv_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -232,7 +238,8 @@ def send_message(conv_id: int, body: SendConversationMessageSchema, db: Session 
 # ── Close / reopen a conversation ─────────────────────────────────────────
 
 @router.patch("/conversations/{conv_id}/status")
-def update_status(conv_id: int, status: str, db: Session = Depends(get_db)):
+def update_status(conv_id: int, status: str, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_conversation_ownership(db, current, conv_id)
     ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == conv_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Conversation not found")

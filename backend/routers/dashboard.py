@@ -5,6 +5,8 @@ from sqlalchemy import or_
 from database import get_db
 from typing import List, Dict, Any
 from datetime import datetime, date, timedelta
+from auth import get_current_parent_or_demo, verify_student_ownership
+from models import ParentMaster
 
 logger = logging.getLogger(__name__)
 from services.dashboard_service import get_dashboard_data
@@ -37,7 +39,8 @@ from models import (
 router = APIRouter()
 
 @router.get("/dashboard/{student_id}", response_model=DashboardResponse)
-def get_dashboard(student_id: int, db: Session = Depends(get_db)):
+def get_dashboard(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     try:
         return get_dashboard_data(db, student_id)
     except HTTPException as e:
@@ -80,7 +83,9 @@ def get_dashboard(student_id: int, db: Session = Depends(get_db)):
 # ──────────────────────────────────────────────────────────────────────────
 
 @router.get("/parents/{parent_id}/children", response_model=List[MappedChildSchema])
-def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
+def get_parent_children(parent_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    if parent_id != current.parent_id:
+        raise HTTPException(status_code=403, detail="Access denied.")
     children_query = db.query(StudentMaster, ClassMaster)\
         .join(ParentStudentMap, ParentStudentMap.student_id == StudentMaster.student_id)\
         .outerjoin(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
@@ -98,7 +103,8 @@ def get_parent_children(parent_id: int, db: Session = Depends(get_db)):
     return result
 
 @router.get("/assignments/history/{student_id}", response_model=List[AssignmentSchema])
-def get_assignments_history(student_id: int, db: Session = Depends(get_db)):
+def get_assignments_history(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
     if not student:
         logger.warning("[assignments/history] student_id=%s not found → returning []", student_id)
@@ -145,7 +151,8 @@ def get_assignments_history(student_id: int, db: Session = Depends(get_db)):
     return assignment_list
 
 @router.get("/assignments/analytics/{student_id}", response_model=AssignmentAnalyticsResponse)
-def get_assignment_analytics(student_id: int, db: Session = Depends(get_db)):
+def get_assignment_analytics(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
     if not student:
         logger.warning("[assignments/analytics] student_id=%s not found → returning zeroes", student_id)
@@ -169,7 +176,8 @@ def get_assignment_analytics(student_id: int, db: Session = Depends(get_db)):
     return AssignmentAnalyticsResponse(total=total, submitted=submitted, pending=ongoing, overdue=overdue, graded=graded, completion_pct=completion_pct)
 
 @router.post("/assignments/submit", response_model=AssignmentSchema)
-def submit_assignment(request: AssignmentSubmitRequest, db: Session = Depends(get_db)):
+def submit_assignment(request: AssignmentSubmitRequest, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, request.student_id)
     existing = db.query(StudentSubmission).filter(
         StudentSubmission.assignment_id == request.assignment_id,
         StudentSubmission.student_id == request.student_id
@@ -214,7 +222,8 @@ def submit_assignment(request: AssignmentSubmitRequest, db: Session = Depends(ge
     )
 
 @router.get("/quiz/history/{student_id}", response_model=List[QuizDetailResponse])
-def get_quiz_history(student_id: int, db: Session = Depends(get_db)):
+def get_quiz_history(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
     if not student:
         logger.warning("[quiz/history] student_id=%s not found → returning []", student_id)
@@ -267,7 +276,8 @@ def get_quiz_history(student_id: int, db: Session = Depends(get_db)):
     return quiz_list
 
 @router.get("/remarks/history/{student_id}", response_model=List[RemarkSchema])
-def get_remarks_history(student_id: int, db: Session = Depends(get_db)):
+def get_remarks_history(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     # Source 1: teacher_remarks stored on submitted assignments (graded work).
     # JOIN uses UsersMaster (assigned_by → users_masters.user_id on production).
     submissions_remarks = db.query(StudentSubmission, UsersMaster.full_name, SubjectMaster.subject_name)\
@@ -324,7 +334,8 @@ def get_remarks_history(student_id: int, db: Session = Depends(get_db)):
     return [RemarkSchema(**r) for r in all_remarks]
 
 @router.get("/notices/history/{student_id}", response_model=List[NoticeSchema])
-def get_notices_history(student_id: int, db: Session = Depends(get_db)):
+def get_notices_history(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
 
     student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
     if not student:
@@ -417,7 +428,8 @@ def get_notices_history(student_id: int, db: Session = Depends(get_db)):
 # ──────────────────────────────────────────────────────────────────────────
 
 @router.get("/notifications/unread-count/{student_id}")
-def get_unread_count(student_id: int, db: Session = Depends(get_db)):
+def get_unread_count(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     """Returns total unread teacher messages across all conversations for this student."""
     count = db.query(TicketMessage)\
         .join(SupportTicket, TicketMessage.ticket_id == SupportTicket.ticket_id)\
@@ -430,7 +442,8 @@ def get_unread_count(student_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/notifications/{student_id}", response_model=List[NotificationSchema])
-def get_notifications(student_id: int, db: Session = Depends(get_db)):
+def get_notifications(student_id: int, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):
+    verify_student_ownership(db, current, student_id)
     notifications = []
     today = date.today()
 
