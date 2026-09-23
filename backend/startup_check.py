@@ -124,7 +124,17 @@ def run_startup_checks(raise_on_error: bool = True) -> bool:
     RuntimeError
         When raise_on_error=True and at least one required table is missing.
     """
-    db_url_hint = os.getenv("DATABASE_URL", "local PostgreSQL")
+    _raw_url = os.getenv("DATABASE_URL", "")
+    if _raw_url:
+        try:
+            from urllib.parse import urlparse, urlunparse
+            _p = urlparse(_raw_url)
+            _redacted = _p._replace(netloc=_p.hostname + (f":{_p.port}" if _p.port else ""))
+            db_url_hint = urlunparse(_redacted)
+        except Exception:
+            db_url_hint = "<DATABASE_URL set>"
+    else:
+        db_url_hint = "local PostgreSQL (DATABASE_URL not set)"
     prefix      = DB_PREFIX or "(no prefix)"
 
     log.info("=" * 60)

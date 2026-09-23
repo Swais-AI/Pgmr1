@@ -6,3 +6,5 @@ pydantic
 deep-translator
 python-dotenv
 PyJWT
+pytest
+httpx

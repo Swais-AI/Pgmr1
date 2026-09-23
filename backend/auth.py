@@ -16,6 +16,7 @@ Env:
   JWT_EXPIRE_HOURS  token lifetime (default 24)
 """
 
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -25,12 +26,20 @@ from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import ParentMaster
+from models import ParentMaster, ParentStudentMap, SupportTicket
+
+logger = logging.getLogger(__name__)
 
 SSO_SECRET = os.getenv("SSO_SECRET", "")
 JWT_SECRET = os.getenv("JWT_SECRET", "")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "24"))
+
+# Development-only demo parent fallback.
+# Set APP_ENV=development in .env to enable. NEVER set in production.
+_APP_ENV = os.getenv("APP_ENV", "production").lower()
+IS_DEV = _APP_ENV in ("development", "dev", "local")
+DEMO_PARENT_ID = 10
 
 
 def create_parent_token(parent: ParentMaster) -> str:
@@ -82,3 +91,56 @@ def get_current_parent(
     if not parent:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Parent account not found.")
     return parent
+
+
+def get_current_parent_or_demo(
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db),
+) -> ParentMaster:
+    """
+    Like get_current_parent but allows unauthenticated access in development.
+
+    In production (APP_ENV != development/dev/local) a missing token always
+    returns 401.  In development a missing token returns demo parent id=10 so
+    the frontend works on a laptop without a login portal.
+    """
+    if not authorization or not authorization.lower().startswith("bearer "):
+        if IS_DEV:
+            parent = db.query(ParentMaster).filter(ParentMaster.parent_id == DEMO_PARENT_ID).first()
+            if not parent:
+                raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Demo parent not found in DB.")
+            logger.debug("Dev fallback: using demo parent %d", DEMO_PARENT_ID)
+            return parent
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not logged in.")
+
+    claims = decode_token(authorization.split(" ", 1)[1].strip())
+    if claims.get("role") != "parent":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not a parent session.")
+
+    parent = db.query(ParentMaster).filter(ParentMaster.parent_id == claims["parent_id"]).first()
+    if not parent:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Parent account not found.")
+    return parent
+
+
+def verify_student_ownership(db: Session, current: ParentMaster, student_id: int) -> None:
+    """Raise 403 if the student does not belong to this parent."""
+    mapping = (
+        db.query(ParentStudentMap)
+        .filter(
+            ParentStudentMap.parent_id == current.parent_id,
+            ParentStudentMap.student_id == student_id,
+        )
+        .first()
+    )
+    if not mapping:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Access denied.")
+
+
+def verify_conversation_ownership(db: Session, current: ParentMaster, conv_id: int) -> None:
+    """Raise 403/404 if this conversation does not belong to this parent."""
+    ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == conv_id).first()
+    if not ticket:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found.")
+    if ticket.parent_id != current.parent_id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Access denied.")
