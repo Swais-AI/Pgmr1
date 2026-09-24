@@ -249,7 +249,7 @@ export default function TopBar({
                         <span className="text-xl shrink-0">{notifIcon(n.type)}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm text-white font-semibold truncate flex-1">{n.title}</p>
+                            <p className="text-sm text-white font-semibold line-clamp-2 break-words flex-1">{n.title}</p>
                             <span className="shrink-0 w-2 h-2 rounded-full bg-orange-500" />
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{n.message}</p>

@@ -239,7 +239,7 @@ export default function NoticesHistory() {
                       markNoticeRead(notice.notice_id);
                       setModalNotice({ notice, displayTitle, displayText });
                     }}
-                    className={`bg-white/5 rounded-2xl border hover:bg-white/10 transition-all p-5 md:p-6 flex flex-col md:flex-row gap-5 items-start relative group cursor-pointer ${isUnread ? 'border-orange-500/40' : 'border-white/10'}`}
+                    className={`bg-white/5 rounded-2xl border hover:bg-white/10 transition-all p-5 md:p-6 flex flex-col md:flex-row gap-5 items-start group cursor-pointer ${isUnread ? 'border-orange-500/40' : 'border-white/10'}`}
                   >
                     {/* Left Icon */}
                     <div className="shrink-0 w-16 h-16 rounded-full bg-orange-50 border-[6px] border-[#FFF7ED] flex items-center justify-center text-orange-500 text-2xl hidden md:flex">
@@ -247,42 +247,41 @@ export default function NoticesHistory() {
                     </div>
 
                     {/* Main Content */}
-                    <div className="flex-1 min-w-0 pr-0 md:pr-40">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="shrink-0 w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 text-lg md:hidden">
-                          📢
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="shrink-0 w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 text-lg md:hidden">
+                            📢
+                          </div>
+                          <h3 className="font-black text-white text-lg leading-tight break-words whitespace-normal">{displayTitle}</h3>
                         </div>
-                        <h3 className="font-black text-white text-lg leading-tight break-words whitespace-normal">{displayTitle}</h3>
+                        {/* Right Badges — inline on mobile (no absolute), static on desktop */}
+                        <div className="flex flex-col items-end gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                          {isUnread && (
+                            <div className="bg-[#EA580C] text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
+                              New
+                            </div>
+                          )}
+                          <SpeakBtn
+                            textKey={ttsKey}
+                            speaking={speaking}
+                            fallback={isFallback}
+                            onSpeak={() => speak(`${displayTitle}. ${displayText}`, language, ttsKey)}
+                          />
+                          <div className="flex items-center gap-2 bg-[#FFF7ED] text-[#EA580C] border border-[#FED7AA] px-3 py-1.5 rounded-lg">
+                            <span className="text-sm">🗓️</span>
+                            <span className="text-xs font-black tracking-wide">{notice.notice_date}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <p className="text-sm font-medium text-slate-300 leading-relaxed whitespace-pre-line mt-1 md:mt-2 line-clamp-3">
+                      <p className="text-sm font-medium text-slate-300 leading-relaxed whitespace-pre-line mt-1 line-clamp-3">
                         {displayText}
                       </p>
 
                       <p className="text-xs font-bold text-slate-400 mt-4">
                         Posted by: <span className="text-slate-300">{notice.posted_by_name}</span>
                       </p>
-                    </div>
-
-                    {/* Right Badges */}
-                    <div className="absolute top-5 right-5 md:static flex flex-row md:flex-col items-center md:items-end gap-3 shrink-0" onClick={e => e.stopPropagation()}>
-                      {isUnread && (
-                        <div className="bg-[#EA580C] text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
-                          New
-                        </div>
-                      )}
-
-                      <SpeakBtn
-                        textKey={ttsKey}
-                        speaking={speaking}
-                        fallback={isFallback}
-                        onSpeak={() => speak(`${displayTitle}. ${displayText}`, language, ttsKey)}
-                      />
-
-                      <div className="flex items-center gap-2 bg-[#FFF7ED] text-[#EA580C] border border-[#FED7AA] px-3 py-1.5 rounded-lg">
-                        <span className="text-sm">🗓️</span>
-                        <span className="text-xs font-black tracking-wide">{notice.notice_date}</span>
-                      </div>
                     </div>
                   </div>
                 );

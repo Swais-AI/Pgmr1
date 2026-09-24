@@ -308,10 +308,10 @@ export default function QuizPerformancePage() {
 
                 {/* Remarks & Suggestion */}
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">Teacher Insights</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">Performance Feedback</p>
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                     <div>
-                      <p className="text-xs font-bold text-slate-400 mb-1">Status Feedback</p>
+                      <p className="text-xs font-bold text-slate-400 mb-1">Performance Summary</p>
                       <p className="text-sm font-bold text-white">{dQM[3] ?? modalData.suggestion}</p>
                     </div>
                     {modalData.remarks && modalData.remarks !== modalData.suggestion && (

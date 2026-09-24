@@ -139,7 +139,7 @@ def create_conversation(body: CreateConversationSchema, db: Session = Depends(ge
     first_msg = TicketMessage(
         ticket_id=ticket.ticket_id,
         sender_type="PARENT",
-        sender_name="Parent",
+        sender_name=current.full_name or "Parent",
         message=body.first_message,
         is_read=False,
     )

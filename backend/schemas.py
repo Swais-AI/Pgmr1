@@ -44,6 +44,7 @@ class AssignmentSchema(BaseModel):
     subject: str
     chapter_name: Optional[str] = None
     teacher_name: Optional[str] = None
+    teacher_user_id: Optional[int] = None
     due_date: str
     status: str
     marks_obtained: Optional[float] = None
@@ -52,6 +53,10 @@ class AssignmentSchema(BaseModel):
     submission_text: Optional[str] = None
     teacher_remarks: Optional[str] = None
     file_path: Optional[str] = None
+
+class AttachmentResponse(BaseModel):
+    file_name: str
+    url: str
 
 class AssignmentSubmitRequest(BaseModel):
     assignment_id: int
