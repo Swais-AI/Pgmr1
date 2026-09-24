@@ -258,6 +258,7 @@ function NewConversationModal({
   recipients,
   prefilledSubject = '',
   prefilledCategory = 'Academic',
+  prefilledRecipient = null,
   onClose,
   onCreate,
 }: {
@@ -267,10 +268,11 @@ function NewConversationModal({
   recipients: Recipient[];
   prefilledSubject?: string;
   prefilledCategory?: string;
+  prefilledRecipient?: Recipient | null;
   onClose: () => void;
   onCreate: (conv: Conversation) => void;
 }) {
-  const [recipient,   setRecipient]   = useState<Recipient | null>(null);
+  const [recipient,   setRecipient]   = useState<Recipient | null>(prefilledRecipient);
   const [category,    setCategory]    = useState(prefilledCategory || 'Academic');
   const [subject,     setSubject]     = useState(prefilledSubject || '');
   const [firstMsg,    setFirstMsg]    = useState('');
@@ -512,7 +514,7 @@ function NewConversationModal({
 // ── Main Page ─────────────────────────────────────────────────────────────
 
 function CommunicationCenterInner() {
-  const { studentId, setStudentId, parentId, language, setLanguage } = useDashboard();
+  const { studentId, setStudentId, parentId, parentName, language, setLanguage } = useDashboard();
   const searchParams = useSearchParams();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -528,9 +530,13 @@ function CommunicationCenterInner() {
   const [showModal,  setShowModal]  = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
 
+  // Mobile: show either the list or the thread, not both side-by-side
+  const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
+
   // Pre-fill values when navigating from assignments or quizzes
-  const [prefilledSubject,  setPrefilledSubject]  = useState('');
-  const [prefilledCategory, setPrefilledCategory] = useState('Academic');
+  const [prefilledSubject,   setPrefilledSubject]   = useState('');
+  const [prefilledCategory,  setPrefilledCategory]  = useState('Academic');
+  const [prefilledRecipient, setPrefilledRecipient] = useState<Recipient | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -587,6 +593,7 @@ function CommunicationCenterInner() {
 
   useEffect(() => {
     setSelected(null);
+    setMobileView('list');
     setMessages([]);
     if (studentId && parentId) {
       loadConversations();
@@ -599,23 +606,36 @@ function CommunicationCenterInner() {
     if (!convParam || conversations.length === 0) return;
     const targetId = Number(convParam);
     const target = conversations.find(c => c.conv_id === targetId);
-    if (target) setSelected(target);
+    if (target) { setSelected(target); setMobileView('thread'); }
   }, [conversations, searchParams]);
 
-  // Auto-open new conversation modal from ?new=1&subject=...&category=... (from assignments/quiz)
+  // Auto-open new conversation modal from ?new=1&subject=...&category=...&teacher_id=... (from assignments/quiz)
   useEffect(() => {
-    const isNew  = searchParams.get('new') === '1';
-    const subj   = searchParams.get('subject') ?? '';
-    const cat    = searchParams.get('category') ?? 'Academic';
+    const isNew     = searchParams.get('new') === '1';
+    const subj      = searchParams.get('subject') ?? '';
+    const cat       = searchParams.get('category') ?? 'Academic';
+    const teacherId = searchParams.get('teacher_id');
     if (!isNew) return;
     setPrefilledSubject(subj);
     setPrefilledCategory(cat);
+
+    const applyTeacher = (list: Recipient[]) => {
+      if (teacherId) {
+        const match = list.find(r => r.teacher_id === Number(teacherId));
+        setPrefilledRecipient(match ?? null);
+      } else {
+        setPrefilledRecipient(null);
+      }
+    };
+
     if (recipients.length === 0) {
       fetchConversationRecipients(studentId).then(data => {
         setRecipients(data);
+        applyTeacher(data);
         setShowModal(true);
       });
     } else {
+      applyTeacher(recipients);
       setShowModal(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -653,7 +673,7 @@ function CommunicationCenterInner() {
       const msg = await sendConversationMessage(
         selected.conv_id,
         'PARENT',
-        'Parent',
+        parentName || 'Parent',
         reply.trim(),
       );
       setMessages(prev => [...prev, msg]);
@@ -710,7 +730,7 @@ function CommunicationCenterInner() {
       <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 72px)' }}>
 
         {/* ── LEFT PANEL: Conversation List ── */}
-        <div className="w-80 shrink-0 bg-slate-900/50 border-r border-white/10 flex flex-col overflow-hidden">
+        <div className={`${mobileView === 'thread' ? 'hidden md:flex' : 'flex'} w-full md:w-80 shrink-0 bg-slate-900/50 border-r border-white/10 flex-col overflow-hidden`}>
 
           {/* Header */}
           <div className="px-4 pt-4 pb-3 border-b border-white/10">
@@ -776,7 +796,7 @@ function CommunicationCenterInner() {
                   selected={selected?.conv_id === c.conv_id}
                   displaySubject={convTranslations[c.conv_id]?.subject}
                   displayPreview={convTranslations[c.conv_id]?.preview || undefined}
-                  onClick={() => setSelected(c)}
+                  onClick={() => { setSelected(c); setMobileView('thread'); }}
                 />
               ))
             )}
@@ -784,7 +804,7 @@ function CommunicationCenterInner() {
         </div>
 
         {/* ── RIGHT PANEL: Thread ── */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col overflow-hidden`}>
           {!selected ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
               <ChatBubbleLeftRightIcon className="w-14 h-14 text-slate-600 mb-4" />
@@ -804,6 +824,13 @@ function CommunicationCenterInner() {
             <>
               {/* Thread header */}
               <div className="px-5 py-4 border-b border-white/10 bg-slate-900/30 shrink-0">
+                {/* Back button — mobile only */}
+                <button
+                  onClick={() => setMobileView('list')}
+                  className="md:hidden flex items-center gap-1.5 text-xs font-semibold text-orange-400 hover:text-orange-300 mb-3 transition-colors"
+                >
+                  <span>←</span> All Conversations
+                </button>
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-sm font-black shrink-0">
                     {initials(selected.recipient_name)}
@@ -932,11 +959,13 @@ function CommunicationCenterInner() {
           recipients={recipients}
           prefilledSubject={prefilledSubject}
           prefilledCategory={prefilledCategory}
+          prefilledRecipient={prefilledRecipient}
           onClose={() => {
             setShowModal(false);
             setRecipients([]);
             setPrefilledSubject('');
             setPrefilledCategory('Academic');
+            setPrefilledRecipient(null);
           }}
           onCreate={handleConversationCreated}
         />

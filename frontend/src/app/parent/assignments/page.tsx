@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
-import { fetchAssignmentsHistory, fetchAssignmentAnalytics, submitAssignment } from '@/lib/api';
+import { fetchAssignmentsHistory, fetchAssignmentAnalytics, submitAssignment, fetchAssignmentAttachment } from '@/lib/api';
 import { useDashboard } from '@/lib/DashboardContext';
 import AIInsightPanel from '@/components/AIInsightPanel';
 import { useAIAssignmentReport } from '@/hooks/useAIAssignmentReport';
@@ -11,7 +11,7 @@ import { useTranslation, useTranslatedText } from '@/lib/multilingual';
 type Assignment = {
   assignment_id: number; assignment_title: string; assignment_text?: string | null;
   subject: string; chapter_name?: string;
-  teacher_name?: string; due_date: string; status: string;
+  teacher_name?: string; teacher_user_id?: number | null; due_date: string; status: string;
   marks_obtained?: number | null; total_marks?: number | null;
   submitted_at?: string | null; submission_text?: string | null;
   teacher_remarks?: string | null; file_path?: string | null;
@@ -65,8 +65,23 @@ export default function AssignmentsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{m:string;ok:boolean}|null>(null);
   const [aiModal, setAiModal] = useState(false);
+  const [attachmentLoading, setAttachmentLoading] = useState(false);
 
   const notify = (m:string,ok=true) => { setToast({m,ok}); setTimeout(()=>setToast(null),3000); };
+
+  const openAttachment = async (assignmentId: number) => {
+    setAttachmentLoading(true);
+    try {
+      const result = await fetchAssignmentAttachment(assignmentId, studentId);
+      if (result?.url) {
+        window.open(result.url, '_blank', 'noopener,noreferrer');
+      } else {
+        notify('No attachment found for this assignment.', false);
+      }
+    } finally {
+      setAttachmentLoading(false);
+    }
+  };
 
   const validateGoogleDriveUrl = (url: string): boolean => {
     let parsed: URL;
@@ -203,12 +218,12 @@ export default function AssignmentsPage() {
         <div className="max-w-7xl mx-auto space-y-4">
 
           {/* Header */}
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-start gap-3">
             <div>
               <h1 className="text-2xl font-black" style={{color:'#F8FAFC'}}>Assignments</h1>
               <p className="text-sm mt-0.5" style={{color:'#94A3B8'}}>Track, submit, and monitor all assignments.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {aiStatus !== 'disabled' && (
                 <button
                   onClick={() => { setAiModal(true); if (aiStatus === 'idle') generateReport(); }}
@@ -374,9 +389,22 @@ export default function AssignmentsPage() {
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{color:'#64748B'}}>Description</p>
                   <div className="rounded-xl p-4" style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)'}}>
-                    <p className="text-sm leading-relaxed" style={{color:drawer.assignment_text?'#E2E8F0':'#64748B',fontStyle:drawer.assignment_text?'normal':'italic'}}>
-                      {drawer.assignment_text ? (dD[3] || drawer.assignment_text) : 'No description provided.'}
-                    </p>
+                    {drawer.assignment_text ? (
+                      <p className="text-sm leading-relaxed" style={{color:'#E2E8F0'}}>
+                        {dD[3] || drawer.assignment_text}
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm italic" style={{color:'#64748B'}}>No text description provided.</p>
+                        <button
+                          onClick={() => openAttachment(drawer.assignment_id)}
+                          disabled={attachmentLoading}
+                          className="self-start flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold border transition-colors hover:border-orange-400 hover:text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{color:'#CBD5E1',borderColor:'rgba(255,255,255,0.2)',background:'rgba(255,255,255,0.05)'}}>
+                          📎 {attachmentLoading ? 'Loading…' : 'View Description PDF'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -485,7 +513,8 @@ export default function AssignmentsPage() {
               <button
                 onClick={()=>{
                   const subject = encodeURIComponent(`Re: ${drawer.assignment_title} (${drawer.subject})`);
-                  router.push(`/parent/communication?new=1&subject=${subject}&category=Academic`);
+                  const teacherParam = drawer.teacher_user_id ? `&teacher_id=${drawer.teacher_user_id}` : '';
+                  router.push(`/parent/communication?new=1&subject=${subject}&category=Academic${teacherParam}`);
                   setDrawer(null);
                 }}
                 className="px-4 py-2.5 rounded-xl font-semibold text-sm border transition-colors hover:border-blue-400 hover:text-blue-600 flex items-center gap-1.5"

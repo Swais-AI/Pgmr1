@@ -16,6 +16,7 @@ from schemas import (
     DashboardResponse, MappedChildSchema, AssignmentSchema, QuizSchema, QuizDetailResponse,
     RemarkSchema, NoticeSchema, CallRequestCreate, CallRequestResponse,
     AssignmentSubmitRequest, AssignmentAnalyticsResponse, NotificationSchema,
+    AttachmentResponse,
     # DISABLED: AttendanceDataResponse, AttendanceOverviewSchema, AttendanceDaySchema
     #           — attendance module removed from parent portal.
     # DISABLED: LeaveRequestCreate, LeaveRequestResponse, LeaveStatusUpdate
@@ -26,7 +27,7 @@ from models import (
     ParentStudentMap, StudentMaster, ClassMaster, AssignmentMaster, SubjectMaster,
     ChapterMaster, StudentSubmission, QuizMaster, QuizResponse,
     UsersMaster, NoticeBoard,
-    SupportTicket, TicketMessage,
+    SupportTicket, TicketMessage, FileStorageMetadata,
     # DISABLED: CallRequest   — call-request routes commented out below.
     # DISABLED: AttendanceMaster — attendance endpoints commented out below.
     # DISABLED: LeaveRequest     — leave-request endpoints commented out below.
@@ -139,6 +140,7 @@ def get_assignments_history(student_id: int, db: Session = Depends(get_db), curr
             subject=subject_name,
             chapter_name=chapter_name,
             teacher_name=teacher_name or "",
+            teacher_user_id=assign.assigned_by,
             due_date=assign.due_date.isoformat() if assign.due_date else "",
             status=status,
             marks_obtained=submission.marks_obtained if submission else None,
@@ -174,6 +176,69 @@ def get_assignment_analytics(student_id: int, db: Session = Depends(get_db), cur
     upcoming = sum(1 for a, s in rows if not s and (not a.due_date or (a.due_date >= today and (a.due_date - today).days > 7)))
     completion_pct = round((submitted + graded) / total * 100, 1) if total > 0 else 0.0
     return AssignmentAnalyticsResponse(total=total, submitted=submitted, pending=ongoing, overdue=overdue, graded=graded, completion_pct=completion_pct)
+
+@router.get("/assignments/{assignment_id}/attachment", response_model=AttachmentResponse)
+def get_assignment_attachment(
+    assignment_id: int,
+    student_id: int,
+    db: Session = Depends(get_db),
+    current: ParentMaster = Depends(get_current_parent_or_demo),
+):
+    """
+    Return a presigned S3 URL for a teacher-uploaded assignment PDF.
+
+    Authorization:
+      1. verify_student_ownership — confirms the parent→student mapping in DB.
+      2. Confirm the assignment belongs to the student's class — prevents a
+         parent from fetching attachments for assignments in other classes even
+         if they supply a valid student_id they own.
+
+    The raw s3:// URI is never returned to the client.
+    """
+    # Step 1 — parent must own this student (DB-side check, not client trust)
+    verify_student_ownership(db, current, student_id)
+
+    # Step 2 — resolve the student's class
+    student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found.")
+
+    # Step 3 — confirm assignment belongs to the student's class via chapter→subject→class chain
+    assignment = (
+        db.query(AssignmentMaster)
+        .join(ChapterMaster, AssignmentMaster.chapter_id == ChapterMaster.chapter_id)
+        .join(SubjectMaster, ChapterMaster.subject_id == SubjectMaster.subject_id)
+        .filter(
+            AssignmentMaster.assignment_id == assignment_id,
+            SubjectMaster.class_id == student.class_id,
+        )
+        .first()
+    )
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found for this student.")
+
+    # Step 4 — look up the attachment record
+    attachment = (
+        db.query(FileStorageMetadata)
+        .filter(
+            FileStorageMetadata.entity_type == "ASSIGNMENT_ATTACHMENT",
+            FileStorageMetadata.entity_id == assignment_id,
+        )
+        .first()
+    )
+    if not attachment:
+        raise HTTPException(status_code=404, detail="No attachment found for this assignment.")
+
+    # Step 5 — generate presigned URL (never expose the raw s3:// URI)
+    from s3_utils import generate_presigned_url
+    try:
+        presigned = generate_presigned_url(attachment.file_url)
+    except (ValueError, RuntimeError) as exc:
+        logger.error("[attachment] presign failed assignment_id=%s: %s", assignment_id, exc)
+        raise HTTPException(status_code=500, detail="Could not generate file link.")
+
+    return AttachmentResponse(file_name=attachment.file_name, url=presigned)
+
 
 @router.post("/assignments/submit", response_model=AssignmentSchema)
 def submit_assignment(request: AssignmentSubmitRequest, db: Session = Depends(get_db), current: ParentMaster = Depends(get_current_parent_or_demo)):

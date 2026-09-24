@@ -544,6 +544,28 @@ class AssessmentResult(Base):
     assessment_info = relationship("Assessment")
 
 
+# ── 17. FileStorageMetadata ───────────────────────────────────────────────────
+# Read-only mapping of sgs_file_storage_metadata.
+# Used to retrieve teacher-uploaded assignment PDFs stored in S3.
+# entity_type values present on RDS: 'ASSIGNMENT_ATTACHMENT', 'CHAPTER_STUDY_MATERIAL'.
+# No writes are performed via this model.
+
+class FileStorageMetadata(Base):
+    __tablename__ = f"{DB_PREFIX}file_storage_metadata"
+
+    file_id     = Column(BigInteger, primary_key=True, index=True)
+    entity_type = Column(String(100), nullable=False)
+    entity_id   = Column(BigInteger, nullable=False, index=True)
+    file_name   = Column(String(200), nullable=False)
+    file_url    = Column(Text, nullable=False)
+    uploaded_by = Column(BigInteger, nullable=True)
+    created_at  = Column(TIMESTAMP, nullable=True)
+    # Audit columns — read-only, not used in queries
+    record_status = Column(String(20), nullable=True)
+    version_no    = Column(Integer, nullable=True)
+    updated_at    = Column(TIMESTAMP, nullable=True)
+
+
 # ── LeaveRequest ──────────────────────────────────────────────────────────────
 # Leave requests now handled as Communication Center category.
 # Restore by un-commenting and re-enabling endpoints/schemas.

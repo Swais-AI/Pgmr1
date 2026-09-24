@@ -169,6 +169,20 @@ export const translateText = async (text: string, targetLang: string) => {
 //   return response.data;
 // };
 
+export const fetchAssignmentAttachment = async (
+  assignmentId: number,
+  studentId: number,
+): Promise<{ file_name: string; url: string } | null> => {
+  try {
+    const response = await api.get(`/assignments/${assignmentId}/attachment`, {
+      params: { student_id: studentId },
+    });
+    return response.data;
+  } catch {
+    return null;
+  }
+};
+
 export const fetchAssessmentHistory = async (studentId: number) => {
   try {
     const response = await api.get(`/assessments/history/${studentId}`);
@@ -246,9 +260,9 @@ export const fetchConversationRecipients = async (studentId: number) => {
   } catch { return []; }
 };
 
-export const fetchConversations = async (studentId: number, parentId: number) => {
+export const fetchConversations = async (studentId: number, _parentId?: number) => {
   try {
-    const response = await api.get(`/comm/conversations/${studentId}`, { params: { parent_id: parentId } });
+    const response = await api.get(`/comm/conversations/${studentId}`);
     return response.data;
   } catch { return []; }
 };
