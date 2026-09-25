@@ -17,6 +17,7 @@ import logging
 from urllib.parse import urlparse
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError, NoCredentialsError
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,15 @@ def generate_presigned_url(s3_uri: str, expiry: int = _PRESIGN_EXPIRY) -> str:
     """
     bucket, key = _parse_s3_uri(s3_uri)
     try:
-        client = boto3.client("s3", region_name=_AWS_REGION)
+        client = boto3.client(
+            "s3",
+            region_name=_AWS_REGION,
+            endpoint_url=f"https://s3.{_AWS_REGION}.amazonaws.com",
+            config=Config(
+                s3={"addressing_style": "virtual"},
+                signature_version="s3v4",
+            ),
+        )
         url = client.generate_presigned_url(
             "get_object",
             Params={"Bucket": bucket, "Key": key},
