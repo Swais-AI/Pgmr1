@@ -198,10 +198,10 @@ export default function TopBar({
           />
         </div>
 
-        <div className="flex items-center gap-6 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-6 w-full md:w-auto justify-end relative">
 
           {/* ── Notification Bell ── */}
-          <div ref={bellRef} className="relative">
+          <div ref={bellRef}>
             <button
               onClick={() => { setShowNotifications(p => !p); setShowProfile(false); }}
               className="relative text-slate-400 hover:text-white transition-colors"

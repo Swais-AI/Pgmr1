@@ -90,7 +90,11 @@ def get_parent_children(parent_id: int, db: Session = Depends(get_db), current: 
     children_query = db.query(StudentMaster, ClassMaster)\
         .join(ParentStudentMap, ParentStudentMap.student_id == StudentMaster.student_id)\
         .outerjoin(ClassMaster, StudentMaster.class_id == ClassMaster.class_id)\
-        .filter(ParentStudentMap.parent_id == parent_id).all()
+        .filter(
+            ParentStudentMap.parent_id == parent_id,
+            StudentMaster.is_active == True,
+            StudentMaster.record_status == 'Active',
+        ).all()
 
     result = []
     for student, class_info in children_query:
@@ -300,7 +304,12 @@ def get_quiz_history(student_id: int, db: Session = Depends(get_db), current: Pa
     .join(ChapterMaster, QuizMaster.chapter_id == ChapterMaster.chapter_id)\
     .join(SubjectMaster, ChapterMaster.subject_id == SubjectMaster.subject_id)\
     .join(QuizResponse, (QuizResponse.quiz_id == QuizMaster.quiz_id) & (QuizResponse.student_id == student_id))\
-    .filter(SubjectMaster.class_id == student.class_id).all()
+    .all()
+    # NOTE: class_id filter intentionally removed. The INNER JOIN on QuizResponse
+    # already scopes results to this student's own responses. Filtering by
+    # SubjectMaster.class_id == student.class_id caused all quiz records to
+    # disappear when the student's class_id differs from the quiz's subject chain
+    # class_id (confirmed on RDS: student class_id=15, quiz subject class_id=13).
         
     quiz_list = []
     for quiz, subject_name, response in quizzes_query:

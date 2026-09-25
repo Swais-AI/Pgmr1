@@ -31,7 +31,7 @@ with patch("startup_check.run_startup_checks", return_value=True), \
 
 from database import get_db
 import auth
-from models import ParentMaster, ParentStudentMap, SupportTicket
+from models import ParentMaster, ParentStudentMap, StudentMaster, SupportTicket
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -42,6 +42,15 @@ def _make_parent(parent_id: int) -> ParentMaster:
     p.full_name = f"Test Parent {parent_id}"
     p.email = f"parent{parent_id}@test.com"
     return p
+
+
+def _make_student(student_id: int) -> StudentMaster:
+    s = StudentMaster()
+    s.student_id = student_id
+    s.full_name = f"Test Student {student_id}"
+    s.is_active = True
+    s.record_status = 'Active'
+    return s
 
 
 def _make_mapping(parent_id: int, student_id: int) -> ParentStudentMap:
@@ -93,6 +102,7 @@ def _mock_db_session(parent_id: int, student_id: int):
         instances = {
             ParentMaster: _make_parent(parent_id),
             ParentStudentMap: _make_mapping(parent_id, student_id),
+            StudentMaster: _make_student(student_id),
         }
         mock_q.filter.return_value.first.return_value = instances.get(model)
         mock_q.filter.return_value.count.return_value = 0
