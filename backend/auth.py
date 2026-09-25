@@ -26,7 +26,7 @@ from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import ParentMaster, ParentStudentMap, SupportTicket
+from models import ParentMaster, ParentStudentMap, StudentMaster, SupportTicket
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,16 @@ def get_current_parent_or_demo(
 
 
 def verify_student_ownership(db: Session, current: ParentMaster, student_id: int) -> None:
-    """Raise 403 if the student does not belong to this parent."""
+    """
+    Raise 403 if the student does not belong to this parent, or if the student
+    is inactive or deleted.
+
+    Both checks are enforced here so that every data endpoint (all 18 routes
+    that call this function) blocks access to inactive/deleted students, even
+    when a parent crafts a direct API request bypassing the ChildSelector.
+
+    Active rule: is_active=True AND record_status='Active'
+    """
     mapping = (
         db.query(ParentStudentMap)
         .filter(
@@ -134,6 +143,10 @@ def verify_student_ownership(db: Session, current: ParentMaster, student_id: int
         .first()
     )
     if not mapping:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Access denied.")
+
+    student = db.query(StudentMaster).filter(StudentMaster.student_id == student_id).first()
+    if not student or not student.is_active or student.record_status != 'Active':
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Access denied.")
 
 
